@@ -1345,3 +1345,4 @@ export {
   WaitForReplicationCallback,
   WaitForReplicationResponse,
 } from './table';
+export * as SqlTypes from './execute-query/types';

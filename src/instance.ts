@@ -13,12 +13,13 @@
 // limitations under the License.
 
 import {promisifyAll} from '@google-cloud/promisify';
-import {Transform} from 'stream';
+import {Duplex, Transform} from 'stream';
 import arrify = require('arrify');
 import * as is from 'is';
 import * as extend from 'extend';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
+const concat = require('concat-stream');
 
 import snakeCase = require('lodash.snakecase');
 import {
@@ -64,11 +65,24 @@ import {
 } from './table';
 import {CallOptions, Operation} from 'google-gax';
 import {ServiceError} from 'google-gax';
-import {Bigtable} from '.';
+import {AbortableDuplex, Bigtable} from '.';
 import {google} from '../protos/protos';
 import {Backup, RestoreTableCallback, RestoreTableResponse} from './backup';
 import {ClusterUtils} from './utils/cluster';
 import {AuthorizedView} from './authorized-view';
+
+import * as SqlTypes from './execute-query/types';
+import {
+  ExecuteQueryParameterValue,
+  QueryResultRow,
+} from './execute-query/values';
+import {ByteBufferTransformer} from './execute-query/bytebuffertransformer';
+import {ProtobufReaderTransformer} from './execute-query/protobufreadertransformer';
+import {ExecuteQueryStreamTransformWithMetadata} from './execute-query/queryresultrowtransformer';
+import {ExecuteQueryStreamReadableWithMetadata} from './execute-query/values';
+import {parseParameters} from './execute-query/parameterparsing';
+import {MetadataConsumer} from './execute-query/metadataconsumer';
+import {setupRetries} from './execute-query/setupretries';
 
 export interface ClusterInfo extends BasicClusterConfig {
   id: string;
@@ -153,6 +167,20 @@ export interface CreateTableFromBackupConfig {
   backup: Backup | string;
   gaxOptions?: CallOptions;
 }
+
+export type ExecuteQueryCallback = (
+  err: Error | null,
+  rows?: QueryResultRow[]
+) => void;
+
+export interface ExecuteQueryOptions {
+  query: string;
+  parameters?: {[param: string]: ExecuteQueryParameterValue};
+  parameter_types?: {[param: string]: SqlTypes.Type};
+  gaxOptions?: CallOptions;
+  encoding?: BufferEncoding;
+}
+export type ExecuteQueryResponse = [QueryResultRow[]];
 
 /**
  * Create an Instance object to interact with a Cloud Bigtable instance.
@@ -1486,6 +1514,186 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
   view(tableName: string, viewName: string): AuthorizedView {
     return new AuthorizedView(this, tableName, viewName);
   }
+
+
+  executeQuery(options: ExecuteQueryOptions): Promise<ExecuteQueryResponse>;
+  executeQuery(
+    options: ExecuteQueryOptions,
+    callback: ExecuteQueryCallback
+  ): void;
+  executeQuery(query: string): Promise<ExecuteQueryResponse>;
+  executeQuery(query: string, callback: ExecuteQueryCallback): void;
+  /**
+   * Execute a SQL query on an instance.
+   *
+   * This method is not recommended for large datasets as it will buffer all rows
+   * before returning the results. Instead we recommend using the streaming API
+   * via {@link Instance#createExecuteQueryStream}.
+   *
+   * @param {?string} [query] Query string.
+   * @param {?object} [options] Configuration object. See
+   *     {@link Instance#createExecuteQueryStream} for a complete list of options.
+   *
+   * @param {function} callback The callback function.
+   * @param {?error} callback.err An error returned while making this request.
+   * @param {?QueryResultRow[]} callback.rows List of rows.
+   * @param {?SqlTypes.ResultSetMetadata} callback.metadata Metadata for the response.
+   *
+   * @example <caption>include:samples/api-reference-doc-snippets/instance.js</caption>
+   * region_tag:bigtable_api_execute_query
+   */
+  executeQuery(
+    queryOrOpts: string | ExecuteQueryOptions,
+    callback?: ExecuteQueryCallback
+  ): void | Promise<ExecuteQueryResponse> {
+    let opts: ExecuteQueryOptions;
+    if (typeof queryOrOpts === 'string') {
+      opts = {query: queryOrOpts};
+    } else {
+      opts = queryOrOpts;
+    }
+    const stream = this.createExecuteQueryStream(opts);
+
+    stream.on('error', callback!).pipe(
+      concat((rows: QueryResultRow[]) => {
+        const metadata = stream.getMetadata();
+        if (metadata === null) {
+          callback!(new Error('Server error - did not receive metadata.'));
+        } else {
+          callback!(null, rows);
+        }
+      })
+    );
+  }
+
+  /**
+   * Execute a SQL query on an instance.
+   *
+   * @param {string} [query] SQL query to execute. Parameters can be specified using @name notation.
+   * @param {object} [opts] Configuration object.
+   * @param {object} [opts.parameters] Object mapping names of parameters used in the query to JS values.
+   *   BtQL types will be inferred from JS types using the following mapping
+   *   {@link Number} -> Float64
+   *   {@link BigInt}-> Int64
+   *   {@link String} -> String
+   *   {@link Boolean} -> Bool
+   *   {@link Buffer} -> Bytes
+   *   {@link PreciseDate}, {@link Date} -> Timestamp
+   *   {@link BigtableDate} -> Date
+   *   {@link Array} -> Array, element type will be inferred based on the type of first objects.
+   *   {@link Map} -> Map, key and value types will be inferred based on one of the entries.
+   *   {@link Struct} -> Struct, with recursive type inference
+   * Types cannot be inferred from provided parameters if provided value is a null, an empty list
+   * or an empty map. If such a case is possible then a type hint for a parameter should be provided
+   * in parameter_types field.
+   * @param {Type} [opts.parameter_types] Optional type hints for parameters.
+   * Type hints should be constructed using factory functions such as {@link Int64}
+   * @returns {ExecuteQueryStreamReadableWithMetadata}
+   *
+   * @example <caption>include:samples/api-reference-doc-snippets/instance.js</caption>
+   * region_tag:bigtable_api_create_query_stream
+   */
+  createExecuteQueryStream(
+    opts: ExecuteQueryOptions
+  ): ExecuteQueryStreamReadableWithMetadata {
+    /**
+     * We create the following streams:
+     * responseStream -> byteBuffer -> readerStream -> resultStream
+     *
+     * The last two (readerStream and resultStream) are connected using pumpify
+     * and returned to the caller.
+     *
+     * When a request is made responseStream and byteBuffer are created,
+     * connected using pumpify and piped to the readerStream.
+     *
+     * On retry, the old responseStream-byteBuffer pair is discarded and a
+     * new pair is crated.
+     *
+     * For more info please refer to comments in setupRetries function.
+     *
+     */
+
+    const options: ExecuteQueryOptions = opts || {};
+
+    const metadataConsumer = new MetadataConsumer();
+
+    let callerCancelled = false;
+    const hasCallerCancelled = () => callerCancelled;
+
+    const resultStream = new ExecuteQueryStreamTransformWithMetadata(
+      metadataConsumer,
+      hasCallerCancelled,
+      options.encoding
+    );
+
+    const protoParams: {[k: string]: google.bigtable.v2.IValue} | null =
+      parseParameters(opts.parameters || {}, opts.parameter_types || {});
+
+    const readerStream = new ProtobufReaderTransformer(metadataConsumer);
+
+    const makeRequest = (): {
+      bigtableStream: AbortableDuplex;
+      valuesStream: Duplex;
+    } => {
+      const reqOpts: google.bigtable.v2.IExecuteQueryRequest = {
+        instanceName: this.name,
+        appProfileId: this.bigtable.appProfileId,
+        query: opts.query,
+        protoFormat: google.bigtable.v2.ProtoFormat.create(),
+        params: protoParams,
+        resumeToken: readerStream.resumeToken,
+      };
+
+      if (!readerStream.resumeToken) {
+        // if we are making a request without resumeToken we expect to
+        // receive metadata even if it is a retry.
+        metadataConsumer.reset();
+      }
+
+      const retryOpts = {
+        currentRetryAttempt: 0,
+        // Handling retries in this client.
+        // Options below prevent gax from retrying.
+        noResponseRetries: 0,
+        shouldRetryFn: () => {
+          return false;
+        },
+      };
+
+      const responseStream = this.bigtable.request({
+        client: 'BigtableClient',
+        method: 'executeQuery',
+        reqOpts,
+        gaxOpts: retryOpts,
+      });
+
+      const byteBuffer = new ByteBufferTransformer(
+        metadataConsumer,
+        options.encoding
+      );
+
+      const rowValuesStream = pumpify.obj([responseStream, byteBuffer]);
+
+      return {bigtableStream: responseStream, valuesStream: rowValuesStream};
+    };
+
+    // This creates a row stream which is two streams connected in a series.
+    const callerStream = pumpify.obj([readerStream, resultStream]);
+
+    setupRetries(
+      makeRequest,
+      callerStream,
+      () => {
+        callerCancelled = true;
+      },
+      options.gaxOptions?.retry?.backoffSettings
+    );
+
+    callerStream.getMetadata = resultStream.getMetadata.bind(resultStream);
+
+    return callerStream;
+  }
+
 }
 
 /*! Developer Documentation

@@ -19,7 +19,7 @@ import * as sinon from 'sinon';
 import * as proxyquire from 'proxyquire';
 import {ServiceError} from 'google-gax';
 import * as snapshot from 'snap-shot-it';
-
+import {Readable} from 'stream';
 import * as inst from '../src/instance';
 import {AppProfile, AppProfileOptions} from '../src/app-profile';
 import {Cluster, CreateClusterOptions} from '../src/cluster';
@@ -34,9 +34,23 @@ import {Bigtable, RequestOptions} from '../src';
 import {PassThrough} from 'stream';
 import * as pumpify from 'pumpify';
 import {FakeCluster} from '../system-test/common';
+import {
+  BigtableDate,
+  BigtableMap,
+  QueryResultRow,
+  SqlValue,
+  Struct,
+} from '../src/execute-query/values';
+import * as SqlTypes from '../src/execute-query/types';
 import {RestoreTableConfig} from '../src/backup';
 import {Options} from './cluster';
 import {createClusterOptionsList} from './constants/cluster';
+import {google} from '../protos/protos';
+import {PreciseDate} from '@google-cloud/precise-date';
+import Long = require('long');
+import {createMetadata, createProtoRows, pbType} from './utils/proto-bytes';
+
+const concat = require('concat-stream');
 
 const sandbox = sinon.createSandbox();
 
@@ -85,6 +99,24 @@ class FakeTable extends Table {
     super(args[0], args[1]);
     this.calledWith_ = args;
   }
+}
+
+// convenience function for ExecuteQuery tests
+function executeQueryResultWithMetadata(
+  instance: any,
+  callback: (...args: any[]) => void
+): void {
+  const stream = instance.createExecuteQueryStream('xd');
+  stream.on('error', callback!).pipe(
+    concat((rows: QueryResultRow[]) => {
+      const metadata = stream.getMetadata();
+      if (metadata === null) {
+        callback!(new Error('Server error - did not receive metadata.'));
+      } else {
+        callback!(null, rows, metadata);
+      }
+    })
+  );
 }
 
 describe('Bigtable/Instance', () => {
@@ -1165,7 +1197,6 @@ describe('Bigtable/Instance', () => {
         .getAppProfilesStream()
         .on('error', err => {
           assert.strictEqual(appProfiles.length, counter);
-          console.log(err.message);
           assert.deepStrictEqual(
             err,
             new Error(
@@ -1961,6 +1992,1176 @@ describe('Bigtable/Instance', () => {
       sandbox.stub(instance.bigtable, 'request').callsArgWith(1, error);
       instance.testIamPermissions(permission, err => {
         assert.strictEqual(err, error);
+        done();
+      });
+    });
+  });
+});
+
+describe('Bigtable/ExecuteQuery', () => {
+  // Create an array of Response objects
+
+  const responsesRef = {
+    responses: [] as google.bigtable.v2.ExecuteQueryResponse[],
+
+    setResponses(values: google.bigtable.v2.ExecuteQueryResponse[]) {
+      responsesRef.responses = values;
+    },
+  };
+
+  let requests: any[] = [];
+
+  const INSTANCE_ID = 'my-instance';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const BIGTABLE = {
+    projectName: 'projects/my-project',
+    projectId: 'my-project',
+    request: (config?: any) => {
+      requests.push(config);
+      return Readable.from(responsesRef.responses);
+    },
+  } as Bigtable;
+  let Instance: typeof inst.Instance;
+  let instance: inst.Instance;
+
+  before(() => {
+    Instance = proxyquire('../src/instance.js', {
+      '@google-cloud/promisify': fakePromisify,
+      './app-profile.js': {AppProfile: FakeAppProfile},
+      './backup.js': {Backup: FakeBackup},
+      './cluster.js': {Cluster: FakeCluster},
+      './family.js': {Family: FakeFamily},
+      './table.js': {Table: FakeTable},
+      pumpify,
+    }).Instance;
+  });
+
+  beforeEach(() => {
+    responsesRef.responses = [];
+    requests = [];
+    instance = new Instance(BIGTABLE, INSTANCE_ID);
+  });
+
+  afterEach(() => sandbox.restore());
+
+  describe('execute', () => {
+    it('parses non-composite types', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['int64', pbType({int64Type: {}})],
+          ['float64', pbType({float64Type: {}})],
+          ['string', pbType({stringType: {}})],
+          ['bytes', pbType({bytesType: {}})],
+          ['date', pbType({dateType: {}})],
+          ['timestamp', pbType({timestampType: {}})],
+          ['bool', pbType({boolType: {}})]
+        ),
+        createProtoRows(
+          'token1',
+          {intValue: 1},
+          {floatValue: 2.5},
+          {stringValue: '3'},
+          {bytesValue: new Uint8Array([4, 5, 6])},
+          {dateValue: new google.type.Date({year: 2024, month: 0, day: 1})},
+          {
+            timestampValue: new google.protobuf.Timestamp({
+              seconds: 1234,
+              nanos: 5678,
+            }),
+          },
+          {boolValue: true}
+        ),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(metadata!.get(0).type, 'int64');
+        assert.strictEqual(metadata!.get(1).type, 'float64');
+        assert.strictEqual(metadata!.get(2).type, 'string');
+        assert.strictEqual(metadata!.get(3).type, 'bytes');
+        assert.strictEqual(metadata!.get(4).type, 'date');
+        assert.strictEqual(metadata!.get(5).type, 'timestamp');
+        assert.strictEqual(metadata!.get(6).type, 'bool');
+
+        assert.strictEqual(result![0].get(0), BigInt(1));
+        assert.strictEqual(result![0].get(1), 2.5);
+        assert.strictEqual(result![0].get(2), '3');
+        assert.deepEqual(result![0].get(3), new Uint8Array([4, 5, 6]));
+        assert.deepEqual(result![0].get(4), new BigtableDate(2024, 0, 1));
+        assert.deepEqual(result![0].get(5), new PreciseDate([1234, 5678]));
+        assert.strictEqual(result![0].get(6), true);
+        done();
+      });
+    });
+
+    it('parses multiple rows', done => {
+      responsesRef.setResponses([
+        createMetadata(['f1', pbType({int64Type: {}})]),
+        createProtoRows('token1', {intValue: 1}),
+        createProtoRows('token2', {intValue: 2}),
+        createProtoRows('token3', {intValue: 3}),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
+        assert.strictEqual(metadata!.get(0).type, 'int64');
+
+        assert.strictEqual(result![0].get(0), BigInt(1));
+        assert.strictEqual(result![1].get(0), BigInt(2));
+        assert.strictEqual(result![2].get(0), BigInt(3));
+        done();
+      });
+    });
+
+    it('handles nulls properly', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['f1', pbType({int64Type: {}})],
+          ['f2', pbType({int64Type: {}})]
+        ),
+        createProtoRows(undefined, {intValue: 1}),
+        createProtoRows('token1', {}),
+        createProtoRows(undefined, {}),
+        createProtoRows('token2', {intValue: 2}),
+        createProtoRows(undefined, {}),
+        createProtoRows(undefined, {intValue: 3}),
+        createProtoRows('token3'),
+        createProtoRows(undefined, {}),
+        createProtoRows(undefined, {}),
+        createProtoRows('token4'),
+        createProtoRows(undefined, {intValue: 4}),
+        createProtoRows(undefined, {intValue: 5}),
+        createProtoRows('token5'),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(result?.length, 5);
+
+        assert.strictEqual(result![0].get(0), BigInt(1));
+        assert.strictEqual(result![0].get(1), null);
+
+        assert.strictEqual(result![1].get(0), null);
+        assert.strictEqual(result![1].get(1), BigInt(2));
+
+        assert.strictEqual(result![2].get(0), null);
+        assert.strictEqual(result![2].get(1), BigInt(3));
+
+        assert.strictEqual(result![3].get(0), null);
+        assert.strictEqual(result![3].get(1), null);
+
+        assert.strictEqual(result![4].get(0), BigInt(4));
+        assert.strictEqual(result![4].get(1), BigInt(5));
+
+        done();
+      });
+    });
+
+    it('handles nulls for all types', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['int64', pbType({int64Type: {}})],
+          ['float64', pbType({float64Type: {}})],
+          ['string', pbType({stringType: {}})],
+          ['bytes', pbType({bytesType: {}})],
+          ['date', pbType({dateType: {}})],
+          ['timestamp', pbType({timestampType: {}})],
+          ['bool', pbType({boolType: {}})],
+          [
+            'array',
+            pbType({arrayType: {elementType: pbType({int64Type: {}})}}),
+          ],
+          [
+            'map',
+            pbType({
+              mapType: {
+                keyType: pbType({int64Type: {}}),
+                valueType: pbType({int64Type: {}}),
+              },
+            }),
+          ],
+          [
+            'struct',
+            pbType({
+              structType: {
+                fields: [{fieldName: 'f1', type: pbType({int64Type: {}})}],
+              },
+            }),
+          ],
+          [
+            'arrayWithNulls',
+            pbType({arrayType: {elementType: pbType({int64Type: {}})}}),
+          ],
+          [
+            'mapWithNulls',
+            pbType({
+              mapType: {
+                keyType: pbType({int64Type: {}}),
+                valueType: pbType({stringType: {}}),
+              },
+            }),
+          ],
+          [
+            'structWithNulls',
+            pbType({
+              structType: {
+                fields: [
+                  {fieldName: 'f1', type: pbType({int64Type: {}})},
+                  {fieldName: null, type: pbType({float64Type: {}})},
+                  {fieldName: 'f3', type: pbType({stringType: {}})},
+                ],
+              },
+            }),
+          ]
+        ),
+        createProtoRows(
+          'token1',
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          // arrayWithNulls
+          {
+            arrayValue: {
+              values: [{intValue: 1}, {}, {intValue: 3}],
+            },
+          },
+          // mapWithNulls
+          {
+            arrayValue: {
+              values: [
+                {
+                  arrayValue: {
+                    values: [{intValue: 1}, {}],
+                  },
+                },
+                {
+                  arrayValue: {
+                    values: [{intValue: 2}, {}],
+                  },
+                },
+                {
+                  arrayValue: {
+                    values: [{intValue: 3}, {stringValue: 'c'}],
+                  },
+                },
+              ],
+            },
+          },
+          //structWithNulls
+          {
+            arrayValue: {
+              values: [{intValue: 1}, {}, {}],
+            },
+          }
+        ),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(result![0].get(0), null);
+        assert.strictEqual(result![0].get(1), null);
+        assert.strictEqual(result![0].get(2), null);
+        assert.strictEqual(result![0].get(3), null);
+        assert.strictEqual(result![0].get(4), null);
+        assert.strictEqual(result![0].get(5), null);
+        assert.strictEqual(result![0].get(6), null);
+        assert.strictEqual(result![0].get(7), null);
+        assert.strictEqual(result![0].get(8), null);
+        assert.strictEqual(result![0].get(9), null);
+
+        const arrayWithNulls = result![0].get(10) as SqlValue[];
+        assert.strictEqual(arrayWithNulls[0], BigInt(1));
+        assert.strictEqual(arrayWithNulls[1], null);
+        assert.strictEqual(arrayWithNulls[2], BigInt(3));
+
+        const mapWithNulls = result![0].get(11) as BigtableMap;
+        assert.strictEqual(mapWithNulls.size, 3);
+        assert.strictEqual(mapWithNulls.get(BigInt(1)), null);
+        assert.strictEqual(mapWithNulls.get(BigInt(2)), null);
+        assert.strictEqual(mapWithNulls.get(BigInt(3)), 'c');
+
+        const structWithNulls = result![0].get(12) as Struct;
+        assert.strictEqual(structWithNulls.get('f1'), BigInt(1));
+        assert.strictEqual(structWithNulls.get(1), null);
+        assert.strictEqual(structWithNulls.get('f3'), null);
+
+        done();
+      });
+    });
+
+    it('parses multiple rows in one batch', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['f1', pbType({int64Type: {}})],
+          ['f2', pbType({int64Type: {}})]
+        ),
+        createProtoRows(undefined, {intValue: 1}, {intValue: 2}),
+        createProtoRows(undefined, {intValue: 3}, {intValue: 4}),
+        createProtoRows('token1', {intValue: 5}, {intValue: 6}),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
+        assert.strictEqual(metadata!.get(1), metadata!.get('f2'));
+        assert.strictEqual(metadata!.get(0).type, 'int64');
+        assert.strictEqual(metadata!.get(1).type, 'int64');
+
+        assert.strictEqual(result![0].get(0), BigInt(1));
+        assert.strictEqual(result![0].get('f1'), BigInt(1));
+        assert.strictEqual(result![0].get(1), BigInt(2));
+        assert.strictEqual(result![0].get('f2'), BigInt(2));
+
+        assert.strictEqual(result![1].get(0), BigInt(3));
+        assert.strictEqual(result![1].get('f1'), BigInt(3));
+        assert.strictEqual(result![1].get(1), BigInt(4));
+        assert.strictEqual(result![1].get('f2'), BigInt(4));
+
+        assert.strictEqual(result![2].get(0), BigInt(5));
+        assert.strictEqual(result![2].get('f1'), BigInt(5));
+        assert.strictEqual(result![2].get(1), BigInt(6));
+        assert.strictEqual(result![2].get('f2'), BigInt(6));
+        done();
+      });
+    });
+
+    it('parses an array of ints', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'f1',
+          pbType({arrayType: {elementType: pbType({int64Type: {}})}}),
+        ]),
+        createProtoRows('token1', {
+          arrayValue: {
+            values: [{intValue: 1}, {intValue: 2}, {intValue: 3}],
+          },
+        }),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
+        assert.strictEqual(metadata!.get(0).type, 'array');
+        const arrayType = metadata!.get(0);
+        assert(arrayType.type === 'array');
+        assert.strictEqual(arrayType.elementType.type, 'int64');
+
+        const structResult = result![0].get('f1') as SqlValue[];
+        assert.strictEqual(structResult[0], BigInt(1));
+        assert.strictEqual(structResult[1], BigInt(2));
+        assert.strictEqual(structResult[2], BigInt(3));
+        done();
+      });
+    });
+
+    it('parses a struct', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['f1', pbType({int64Type: {}})],
+          [
+            'f2',
+            pbType({
+              structType: {
+                fields: [
+                  {fieldName: 'f1', type: pbType({int64Type: {}})},
+                  {fieldName: null, type: pbType({float64Type: {}})},
+                  {fieldName: 'f3', type: pbType({stringType: {}})},
+                ],
+              },
+            }),
+          ]
+        ),
+        createProtoRows(
+          'token1',
+          {intValue: 1},
+          {
+            arrayValue: {
+              values: [{intValue: 1}, {floatValue: 2.5}, {stringValue: '3'}],
+            },
+          }
+        ),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
+        assert.strictEqual(metadata!.get(1), metadata!.get('f2'));
+        assert.strictEqual(metadata!.get(0).type, 'int64');
+        const structType = metadata!.get(1);
+        assert.strictEqual(structType.type, 'struct');
+        assert.strictEqual(structType.get('f1').type, 'int64');
+        assert.strictEqual(structType.get(1).type, 'float64');
+        assert.strictEqual(structType.get('f3').type, 'string');
+
+        assert.strictEqual(result![0].get(0), BigInt(1));
+        assert.strictEqual(result![0].get('f1'), BigInt(1));
+        const structResult = result![0].get(1) as Struct;
+        assert.strictEqual(structResult.get('f1'), structResult.get(0));
+        assert.strictEqual(structResult.get('f3'), structResult.get(2));
+
+        assert.strictEqual(structResult.get(0), BigInt(1));
+        assert.strictEqual(structResult.get(1), 2.5);
+        assert.strictEqual(structResult.get(2), '3');
+        done();
+      });
+    });
+
+    it('parses a map', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'f1',
+          pbType({
+            mapType: {
+              keyType: pbType({int64Type: {}}),
+              valueType: pbType({stringType: {}}),
+            },
+          }),
+        ]),
+        createProtoRows(undefined, {
+          arrayValue: {
+            values: [
+              {
+                arrayValue: {
+                  values: [{intValue: 1}, {stringValue: 'a'}],
+                },
+              },
+              {
+                arrayValue: {
+                  values: [{intValue: 2}, {stringValue: 'b'}],
+                },
+              },
+              {
+                arrayValue: {
+                  values: [{intValue: 3}, {stringValue: 'c'}],
+                },
+              },
+            ],
+          },
+        }),
+        createProtoRows('token2', {
+          arrayValue: {
+            values: [
+              {
+                arrayValue: {
+                  values: [{intValue: 4}, {stringValue: 'd'}],
+                },
+              },
+              {
+                arrayValue: {
+                  values: [{intValue: 5}, {stringValue: 'e'}],
+                },
+              },
+              {
+                arrayValue: {
+                  values: [{intValue: 6}, {stringValue: 'f'}],
+                },
+              },
+            ],
+          },
+        }),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        const mapType = metadata!.get(0);
+        assert.strictEqual(mapType.type, 'map');
+        assert.strictEqual(mapType.keyType.type, 'int64');
+        assert.strictEqual(mapType.valueType.type, 'string');
+
+        assert.strictEqual(result?.length, 2);
+
+        const mapResult0 = result![0].get('f1') as BigtableMap;
+        assert.strictEqual(mapResult0.size, 3);
+        assert.strictEqual(mapResult0.get(BigInt(1)), 'a');
+        assert.strictEqual(mapResult0.get(BigInt(2)), 'b');
+        assert.strictEqual(mapResult0.get(BigInt(3)), 'c');
+
+        const mapResult1 = result![1].get('f1') as BigtableMap;
+        assert.strictEqual(mapResult1.size, 3);
+        assert.strictEqual(mapResult1.get(BigInt(4)), 'd');
+        assert.strictEqual(mapResult1.get(BigInt(5)), 'e');
+        assert.strictEqual(mapResult1.get(BigInt(6)), 'f');
+        done();
+      });
+    });
+
+    it('map retains last encountered value for duplicate key', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'f1',
+          pbType({
+            mapType: {
+              keyType: pbType({int64Type: {}}),
+              valueType: pbType({stringType: {}}),
+            },
+          }),
+        ]),
+        createProtoRows('token1', {
+          arrayValue: {
+            values: [
+              {
+                arrayValue: {
+                  values: [{intValue: 1}, {stringValue: 'a'}],
+                },
+              },
+              {
+                arrayValue: {
+                  values: [{intValue: 2}, {stringValue: 'b'}],
+                },
+              },
+              {
+                arrayValue: {
+                  values: [{intValue: 1}, {stringValue: 'c'}],
+                },
+              },
+            ],
+          },
+        }),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        const mapType = metadata!.get(0);
+        assert.strictEqual(mapType.type, 'map');
+        assert.strictEqual(mapType.keyType.type, 'int64');
+        assert.strictEqual(mapType.valueType.type, 'string');
+
+        assert.strictEqual(result?.length, 1);
+
+        const mapResult0 = result![0].get('f1') as BigtableMap;
+        assert.strictEqual(mapResult0.size, 2);
+        assert.strictEqual(mapResult0.get(BigInt(1)), 'c');
+        assert.strictEqual(mapResult0.get(BigInt(2)), 'b');
+        done();
+      });
+    });
+
+    it('accessing duplicated struct field throws', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'structColumn',
+          pbType({
+            structType: {
+              fields: [
+                {fieldName: 'f1', type: pbType({int64Type: {}})},
+                {fieldName: null, type: pbType({float64Type: {}})},
+                {fieldName: 'f1', type: pbType({stringType: {}})},
+              ],
+            },
+          }),
+        ]),
+        createProtoRows('token1', {
+          arrayValue: {
+            values: [{intValue: 1}, {floatValue: 2.5}, {stringValue: '3'}],
+          },
+        }),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.strictEqual(metadata!.get(0).type, 'struct');
+
+        const struct = result![0].get(0) as Struct;
+        assert.strictEqual(struct.get(0), BigInt(1));
+        assert.strictEqual(struct.get(1), 2.5);
+        assert.strictEqual(struct.get(2), '3');
+
+        assert.throws(() => {
+          result![0].get('f1');
+        }, Error);
+        done();
+      });
+    });
+
+    it('missing metadata errs', done => {
+      responsesRef.setResponses([
+        createProtoRows('token1', {
+          intValue: 1,
+        }),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, result, metadata) => {
+        assert.notStrictEqual(err, null);
+        assert.ok(
+          err instanceof Error,
+          `err: "${err}", ${result}, ${metadata}`
+        );
+        done();
+      });
+    });
+
+    it('invalid number of values returned from the server is detected', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['f1', pbType({int64Type: {}})],
+          ['f2', pbType({int64Type: {}})]
+        ),
+        createProtoRows('token1', {intValue: 1}, {intValue: 2}, {intValue: 3}),
+      ]);
+      instance.executeQuery('xd', (err, result) => {
+        assert.notStrictEqual(err, null);
+        assert.ok(err instanceof Error);
+        done();
+      });
+    });
+
+    it('unsupported kind in metadata is detected', done => {
+      const type = new google.bigtable.v2.Type();
+      type.kind = 'unknown-type' as any;
+      responsesRef.setResponses([
+        createMetadata(['f1', pbType({int64Type: {}})], ['f2', type]),
+        createProtoRows('token1', {intValue: 1}, {intValue: 2}),
+      ]);
+      instance.executeQuery('xd', (err, result) => {
+        assert.notStrictEqual(err, null);
+        assert.ok(err instanceof Error);
+        done();
+      });
+    });
+
+    it('unsupported map key type throws', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'map',
+          pbType({
+            mapType: {
+              keyType: pbType({dateType: {}}),
+              valueType: pbType({int64Type: {}}),
+            },
+          }),
+        ]),
+        createProtoRows('token1', {}),
+      ]);
+      instance.executeQuery('xd', (err, result) => {
+        assert.notStrictEqual(err, null);
+        done();
+      });
+    });
+
+    it('map with null key is rejected', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'map',
+          pbType({
+            mapType: {
+              keyType: pbType({int64Type: {}}),
+              valueType: pbType({int64Type: {}}),
+            },
+          }),
+        ]),
+        createProtoRows('token1', {
+          arrayValue: {
+            values: [
+              {
+                arrayValue: {
+                  values: [{}, {intValue: 1}],
+                },
+              },
+            ],
+          },
+        }),
+      ]);
+      instance.executeQuery('xd', (err, result) => {
+        assert.notStrictEqual(err, null);
+        done();
+      });
+    });
+
+    it('map with null value is ok', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          'map',
+          pbType({
+            mapType: {
+              keyType: pbType({int64Type: {}}),
+              valueType: pbType({int64Type: {}}),
+            },
+          }),
+        ]),
+        createProtoRows('token1', {
+          arrayValue: {
+            values: [
+              {
+                arrayValue: {
+                  values: [{intValue: 1}, {}],
+                },
+              },
+            ],
+          },
+        }),
+      ]);
+      instance.executeQuery('xd', (err, result) => {
+        assert.strictEqual(result?.length, 1);
+        done();
+      });
+    });
+
+    it('parameter types are infered', done => {
+      responsesRef.setResponses([
+        createMetadata(['f', pbType({int64Type: {}})]),
+      ]);
+      instance.executeQuery(
+        {
+          query: 'query',
+          parameters: {
+            a: BigInt(1),
+            b: 2.5,
+            c: 'str',
+            d: new Uint8Array([1, 2, 3]),
+            e: false,
+            f: new PreciseDate([1234, 5678]),
+            g: new BigtableDate(2024, 0, 2),
+          },
+        },
+        () => {
+          assert.strictEqual(requests.length, 1);
+          const reqOpts = requests[0]
+            .reqOpts as google.bigtable.v2.IExecuteQueryRequest;
+
+          assert.strictEqual(Object.keys(reqOpts.params!).length, 7);
+          assert.deepEqual(reqOpts.params!['a'].intValue, Long.fromInt(1));
+          assert.strictEqual(reqOpts.params!['b'].floatValue, 2.5);
+          assert.strictEqual(reqOpts.params!['c'].stringValue, 'str');
+          assert.deepEqual(
+            reqOpts.params!['d'].bytesValue,
+            new Uint8Array([1, 2, 3])
+          );
+          assert.strictEqual(reqOpts.params!['e'].boolValue, false);
+          assert.deepEqual(
+            reqOpts.params!['f'].timestampValue,
+            new google.protobuf.Timestamp({seconds: 1234, nanos: 5678})
+          );
+          assert.deepEqual(
+            reqOpts.params!['g'].dateValue,
+            new google.type.Date({year: 2024, month: 0, day: 2})
+          );
+          done();
+        }
+      );
+    });
+
+    it('bigints are correctly converted to longs', done => {
+      responsesRef.setResponses([
+        createMetadata(['f', pbType({int64Type: {}})]),
+      ]);
+      instance.executeQuery(
+        {
+          query: 'query',
+          parameters: {
+            a: BigInt(1),
+            b: BigInt(-1),
+            c: BigInt(0),
+            d: BigInt(Number.MAX_SAFE_INTEGER),
+            e: BigInt(Number.MIN_SAFE_INTEGER),
+            f: BigInt('9007199254740992'), // MAX_SAFE_INTEGER + 1
+            g: BigInt('-9007199254740992'), // MIN_SAFE_INTEGER - 1
+            h: BigInt('1152921504606846976'), // 2^60
+            i: BigInt('-1152921504606846976'), // - 2^60
+            j: BigInt('9223372036854775807'), // 2^63 - 1
+            k: BigInt('-9223372036854775808'), // - 2^63
+          },
+        },
+        () => {
+          assert.strictEqual(requests.length, 1);
+          const reqOpts = requests[0]
+            .reqOpts as google.bigtable.v2.IExecuteQueryRequest;
+
+          assert.deepEqual(reqOpts.params!['a'].intValue, Long.fromInt(1));
+          assert.deepEqual(reqOpts.params!['b'].intValue, Long.fromInt(-1));
+          assert.deepEqual(reqOpts.params!['c'].intValue, Long.fromInt(0));
+          assert.deepEqual(
+            reqOpts.params!['d'].intValue,
+            Long.fromNumber(Number.MAX_SAFE_INTEGER)
+          );
+          assert.deepEqual(
+            reqOpts.params!['e'].intValue,
+            Long.fromNumber(Number.MIN_SAFE_INTEGER)
+          );
+          assert.deepEqual(
+            reqOpts.params!['f'].intValue,
+            Long.fromString('9007199254740992')
+          );
+          assert.deepEqual(
+            reqOpts.params!['g'].intValue,
+            Long.fromString('-9007199254740992')
+          );
+          assert.deepEqual(
+            reqOpts.params!['h'].intValue,
+            Long.fromString('1152921504606846976')
+          );
+          assert.deepEqual(
+            reqOpts.params!['i'].intValue,
+            Long.fromString('-1152921504606846976')
+          );
+          assert.deepEqual(
+            reqOpts.params!['j'].intValue,
+            Long.fromString('9223372036854775807')
+          );
+          assert.deepEqual(
+            reqOpts.params!['k'].intValue,
+            Long.fromString('-9223372036854775808')
+          );
+          done();
+        }
+      );
+    });
+
+    it('empty array is not inferred', () => {
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: []},
+          },
+          () => {}
+        );
+      }, Error);
+    });
+
+    it('null is not inferred', () => {
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: null},
+          },
+          () => {}
+        );
+      }, Error);
+    });
+
+    it('value not matching user provided type is rejected', () => {
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 'a'},
+            parameter_types: {a: SqlTypes.Int64()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: BigInt(1)},
+            parameter_types: {a: SqlTypes.Float64()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {a: SqlTypes.String()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {a: SqlTypes.Bytes()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {a: SqlTypes.Bool()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {a: SqlTypes.Timestamp()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {a: SqlTypes.Date()},
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {
+              a: SqlTypes.Array(SqlTypes.Int64()),
+            },
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: [1, 'a']},
+            parameter_types: {
+              a: SqlTypes.Array(SqlTypes.Int64()),
+            },
+          },
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {
+              a: SqlTypes.Map(SqlTypes.Int64(), SqlTypes.Int64()),
+            },
+          },
+          () => {}
+        );
+      }, Error);
+
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {a: SqlTypes.Int64()},
+          },
+          () => {}
+        );
+      }, Error);
+
+      // TS does not permit passing a Map as parameter,
+      // but we want to check it throws an error
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {
+              a: new Map<bigint, number>([
+                [BigInt(1), 2],
+                [BigInt(3), 'a'] as any as [bigint, number],
+              ]),
+            },
+            parameter_types: {
+              a: SqlTypes.Map(SqlTypes.Int64(), SqlTypes.Int64()),
+            },
+          } as any,
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: 1},
+            parameter_types: {
+              a: SqlTypes.Struct({
+                name: 'f1',
+                type: SqlTypes.Int64(),
+              }),
+            },
+          },
+          () => {}
+        );
+      }, Error);
+      // TS does not permit passing a struct as parameter,
+      // but we want to check it throws an error
+      assert.throws(() => {
+        instance.executeQuery(
+          {
+            query: 'query',
+            parameters: {a: Struct.fromTuples([['f1', 'a']])},
+            parameter_types: {
+              a: SqlTypes.Struct({
+                name: 'f1',
+                type: SqlTypes.Int64(),
+              }),
+            },
+          } as any,
+          () => {}
+        );
+      }, Error);
+    });
+
+    it('null value is accepted if user has provided a type', done => {
+      responsesRef.setResponses([
+        createMetadata(['f', pbType({int64Type: {}})]),
+      ]);
+      instance.executeQuery(
+        {
+          query: 'query',
+          parameters: {a: null},
+          parameter_types: {a: SqlTypes.Int64()},
+        },
+        () => {
+          assert.strictEqual(requests.length, 1);
+          const reqOpts = requests[0]
+            .reqOpts as google.bigtable.v2.IExecuteQueryRequest;
+
+          assert.notStrictEqual(reqOpts.params!['a'].type!.int64Type, null);
+          done();
+        }
+      );
+    });
+
+    it('user provided type is used', done => {
+      responsesRef.setResponses([
+        createMetadata(['f', pbType({int64Type: {}})]),
+      ]);
+      instance.executeQuery(
+        {
+          query: 'query',
+          parameters: {
+            a: null,
+            b: null,
+            c: null,
+            d: null,
+            e: null,
+            f: null,
+            g: null,
+            h: null,
+            i: null,
+            j: null,
+          },
+          parameter_types: {
+            a: SqlTypes.Int64(),
+            b: SqlTypes.Float64(),
+            c: SqlTypes.Bool(),
+            d: SqlTypes.Bytes(),
+            e: SqlTypes.String(),
+            f: SqlTypes.Date(),
+            g: SqlTypes.Timestamp(),
+            h: SqlTypes.Array(SqlTypes.Int64()),
+            i: SqlTypes.Map(SqlTypes.Int64(), SqlTypes.String()),
+            j: SqlTypes.Struct({
+              name: 'f1',
+              type: SqlTypes.Int64(),
+            }),
+          },
+        },
+        () => {
+          assert.strictEqual(requests.length, 1);
+          const reqOpts = requests[0]
+            .reqOpts as google.bigtable.v2.IExecuteQueryRequest;
+
+          assert.notStrictEqual(reqOpts.params!['a'].type!.int64Type, null);
+          assert.notStrictEqual(reqOpts.params!['b'].type!.float64Type, null);
+          assert.notStrictEqual(reqOpts.params!['c'].type!.boolType, null);
+          assert.notStrictEqual(reqOpts.params!['d'].type!.bytesType, null);
+          assert.notStrictEqual(reqOpts.params!['e'].type!.stringType, null);
+          assert.notStrictEqual(reqOpts.params!['f'].type!.dateType, null);
+          assert.notStrictEqual(reqOpts.params!['g'].type!.timestampType, null);
+          assert.notStrictEqual(reqOpts.params!['h'].type!.arrayType, null);
+          assert.notStrictEqual(
+            reqOpts.params!['h'].type!.arrayType?.elementType,
+            null
+          );
+          assert.notStrictEqual(reqOpts.params!['i'].type!.mapType, null);
+          assert.notStrictEqual(
+            reqOpts.params!['i'].type!.mapType?.keyType,
+            null
+          );
+          assert.notStrictEqual(
+            reqOpts.params!['i'].type!.mapType?.valueType,
+            null
+          );
+          assert.notStrictEqual(reqOpts.params!['j'].type!.structType, null);
+          assert.notStrictEqual(
+            reqOpts.params!['j'].type!.structType?.fields![0].type?.int64Type,
+            null
+          );
+          assert.strictEqual(
+            reqOpts.params!['j'].type!.structType?.fields![0].fieldName,
+            'f1'
+          );
+          done();
+        }
+      );
+    });
+
+    it('large bigints are rejected', () => {
+      assert.throws(() => {
+        instance.executeQuery(
+          {query: 'query', parameters: {a: BigInt('-9223372036854775809')}},
+          () => {}
+        );
+      }, Error);
+      assert.throws(() => {
+        instance.executeQuery(
+          {query: 'query', parameters: {a: BigInt('9223372036854775808')}},
+          () => {}
+        );
+      }, Error);
+    });
+
+    it('duplicate struct field names are not accessible by name', done => {
+      responsesRef.setResponses([
+        createMetadata([
+          's',
+          pbType({
+            structType: {
+              fields: [
+                {fieldName: 'f1', type: pbType({int64Type: {}})},
+                {fieldName: 'f2', type: pbType({int64Type: {}})},
+                {fieldName: 'f1', type: pbType({stringType: {}})},
+              ],
+            },
+          }),
+        ]),
+        createProtoRows('token1', {
+          arrayValue: {
+            values: [{intValue: 1}, {intValue: 2}, {stringValue: '3'}],
+          },
+        }),
+      ]);
+      instance.executeQuery('query', (err, rows) => {
+        const struct = rows![0].get('s')! as Struct;
+        assert.strictEqual(struct.get(0), BigInt(1));
+        assert.strictEqual(struct.get(1), BigInt(2));
+        assert.strictEqual(struct.get(2), '3');
+
+        assert.throws(() => {
+          struct.get('f1');
+        }, Error);
+        done();
+      });
+    });
+
+    it('duplicate row field names are not accessible by name', done => {
+      responsesRef.setResponses([
+        createMetadata(
+          ['f1', pbType({int64Type: {}})],
+          ['f2', pbType({int64Type: {}})],
+          ['f1', pbType({int64Type: {}})]
+        ),
+        createProtoRows('token1', {intValue: 1}, {intValue: 2}, {intValue: 3}),
+      ]);
+      executeQueryResultWithMetadata(instance, (err, rows, metadata) => {
+        const row = rows![0];
+        assert.strictEqual(row.get(0), BigInt(1));
+        assert.strictEqual(row.get(1), BigInt(2));
+        assert.strictEqual(row.get(2), BigInt(3));
+        assert.strictEqual(row.get('f2'), BigInt(2));
+
+        assert.throws(() => {
+          row.get('f1');
+        }, Error);
+
+        assert.strictEqual(metadata!.get(0).type, 'int64');
+        assert.strictEqual(metadata!.get(1).type, 'int64');
+        assert.strictEqual(metadata!.get(2).type, 'int64');
+        assert.strictEqual(metadata!.get('f2').type, 'int64');
+
+        assert.throws(() => {
+          metadata!.get('f1');
+        }, Error);
+
         done();
       });
     });
