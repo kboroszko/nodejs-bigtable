@@ -250,7 +250,7 @@ export class ExecuteQueryStateMachine {
     const reqOpts: google.bigtable.v2.IExecuteQueryRequest = {
       ...this.requestParams,
       preparedQuery: this.lastPreparedQueryBytes,
-      protoFormat: google.bigtable.v2.ProtoFormat.create(),
+      // protoFormat: google.bigtable.v2.ProtoFormat.create(),
       resumeToken: this.callerStream.getLatestResumeToken(),
     };
 
@@ -503,14 +503,15 @@ export class ExecuteQueryStateMachine {
   };
 
   private handleStreamEnd = (): void => {
-    if (this.state === 'AfterFirstResumeToken') {
+    if (
+      this.state === 'AfterFirstResumeToken' ||
+      this.state === 'BeforeFirstResumeToken'
+    ) {
       this.clearTimers();
       this.state = 'Finished';
       this.originalEnd();
     } else if (this.state === 'Finished') {
       // noop
-    } else if (this.state === 'BeforeFirstResumeToken') {
-      this.state = 'Finished';
     } else {
       this.fail(
         new Error(

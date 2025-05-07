@@ -27,6 +27,7 @@ export class StructType extends NamedList<Type> {
 
 export type Int64Type = ReturnType<typeof Int64>;
 export type Float64Type = ReturnType<typeof Float64>;
+export type Float32Type = ReturnType<typeof Float32>;
 export type BytesType = ReturnType<typeof Bytes>;
 export type StringType = ReturnType<typeof String>;
 export type BoolType = ReturnType<typeof Bool>;
@@ -40,6 +41,7 @@ export type DateType = ReturnType<typeof Date>;
  */
 export const Int64 = () => ({type: 'int64' as const});
 export const Float64 = () => ({type: 'float64' as const});
+export const Float32 = () => ({type: 'float32' as const});
 export const Bytes = () => ({type: 'bytes' as const});
 export const String = () => ({type: 'string' as const});
 export const Bool = () => ({type: 'bool' as const});
@@ -59,6 +61,7 @@ export const Map = (keyType: Type, valueType: Type): MapType => ({
 
 export type Type =
   | Int64Type
+  | Float32Type
   | Float64Type
   | BytesType
   | StringType

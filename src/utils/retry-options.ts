@@ -49,6 +49,33 @@ export const isRstStreamError = (
   return false;
 };
 
+interface Violation {
+  type: string;
+  description: string;
+}
+
+interface ViolationsList {
+  violations?: Violation[];
+}
+
+function containsPreparedQueryExpired(violations: ViolationsList[]): boolean {
+  if (!Array.isArray(violations) || violations.length === 0) {
+    return false;
+  }
+
+  for (const obj of violations) {
+    if (obj.violations && Array.isArray(obj.violations)) {
+      for (const violation of obj.violations) {
+        if (violation.type === 'PREPARED_QUERY_EXPIRED') {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 /**
  * Checks if the error is an "expired query plan" error.
  * For more info refer to the ExecuteQueryStateMachine
@@ -57,9 +84,13 @@ export const isRstStreamError = (
 export const isExpiredQueryError = (
   error: GoogleError | ServiceError,
 ): boolean => {
-  if (error.code === grpc.status.FAILED_PRECONDITION && error.message) {
-    const error_message = (error.message || '').toLowerCase();
-    return error_message.includes('the prepared query has expired');
+  if (
+    error.code === grpc.status.FAILED_PRECONDITION &&
+    Object.hasOwn(error, 'statusDetails')
+  ) {
+    const statusDetails = (error as GoogleError)
+      .statusDetails as ViolationsList[];
+    return containsPreparedQueryExpired(statusDetails);
   }
   return false;
 };

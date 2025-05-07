@@ -53,6 +53,7 @@ const fakePromisify = Object.assign({}, promisify, {
       'getBackupsStream',
       'getTablesStream',
       'getAppProfilesStream',
+      'view',
     ]);
   },
 });
@@ -563,6 +564,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       resultStream.on('data', (row: any) => {
         responses.push(row);
       });
+      let streamEnded = false;
+      resultStream.on('end', () => {
+        streamEnded = true;
+      });
       resultStream.on('error', () => {
         errorEmitted = true;
       });
@@ -593,6 +598,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(resultStream._stateMachine.state, 'Finished');
             assert.equal(errorEmitted, false);
             assert.equal(responses.length, 0);
+            assert.equal(streamEnded, true);
             done();
           },
         ],

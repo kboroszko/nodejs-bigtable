@@ -83,6 +83,7 @@ export class ExecuteQueryStreamTransformWithMetadata
           return value.boolValue!;
         }
         break;
+      case 'float32':
       case 'float64':
         if (value.kind === 'floatValue') {
           return value.floatValue!;
@@ -112,9 +113,11 @@ export class ExecuteQueryStreamTransformWithMetadata
       case 'map':
         return this.valueToJsMap(value, metadata);
       default:
-        throw new Error(`Unexpected type to parse: ${metadata}`);
+        throw new Error(
+          `Unexpected type to parse: ${JSON.stringify(metadata)}`,
+        );
     }
-    throw new Error(`Metadata and Value not matching. 
+    throw new Error(`Metadata and Value not matching.
     Metadata:${metadata}
     Value:${value}`);
   }
@@ -146,6 +149,11 @@ export class ExecuteQueryStreamTransformWithMetadata
       value.arrayValue.values === undefined
     ) {
       return null;
+    }
+    if (value.arrayValue.values.length !== metadata.values.length) {
+      throw new Error(
+        `Internal error - received Struct with ${value.arrayValue.values.length} values, but metadata has ${metadata.values.length} values.`,
+      );
     }
     return new Struct(
       value.arrayValue.values.map((value, index) =>

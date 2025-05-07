@@ -99,7 +99,10 @@ export class ByteBufferTransformer extends Transform {
       handled = true;
     }
 
-    if (partialResultSet.resumeToken) {
+    if (
+      partialResultSet.resumeToken &&
+      partialResultSet.resumeToken.length > 0
+    ) {
       this.pushMessages(partialResultSet.resumeToken);
       handled = true;
     }

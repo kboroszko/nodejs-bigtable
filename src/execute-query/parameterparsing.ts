@@ -110,7 +110,7 @@ function inferType(value: ExecuteQueryParameterValue): SqlTypes.Type {
   );
 }
 
-function setTypeField(
+export function setTypeField(
   value: google.bigtable.v2.IValue,
   type: SqlTypes.Type,
 ): google.bigtable.v2.IValue {
@@ -118,7 +118,7 @@ function setTypeField(
   return value;
 }
 
-function executeQueryTypeToPBType(
+export function executeQueryTypeToPBType(
   type: SqlTypes.Type,
 ): google.bigtable.v2.IType {
   switch (type.type) {
@@ -126,6 +126,8 @@ function executeQueryTypeToPBType(
       return {stringType: {}};
     case 'int64':
       return {int64Type: {}};
+    case 'float32':
+      return {float32Type: {}};
     case 'float64':
       return {float64Type: {}};
     case 'bytes':
@@ -159,7 +161,7 @@ function executeQueryTypeToPBType(
   }
 }
 
-function convertJsValueToValue(
+export function convertJsValueToValue(
   value: ExecuteQueryParameterValue,
   type: SqlTypes.Type,
 ): google.bigtable.v2.IValue {
@@ -172,6 +174,8 @@ function convertJsValueToValue(
       return convertToString(value);
     case 'int64':
       return convertToInt64(value);
+    case 'float32':
+      return convertToFloat64(value);
     case 'float64':
       return convertToFloat64(value);
     case 'bytes':

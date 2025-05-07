@@ -30,6 +30,8 @@ export class MetadataConsumer {
         return Types.Int64();
       case 'float64Type':
         return Types.Float64();
+      case 'float32Type':
+        return Types.Float32();
       case 'boolType':
         return Types.Bool();
       case 'timestampType':
@@ -86,7 +88,7 @@ export class MetadataConsumer {
     }
     const columns = metadata.protoSchema.columns!;
     if (columns.length === 0) {
-      throw new Error('Invalid metadata does not contain any columns.');
+      throw new Error('Invalid empty ResultSetMetadata received.');
     }
 
     return Types.ResultSetMetadata.fromTuples(
