@@ -217,10 +217,17 @@ export class ExecuteQueryStateMachine {
       ? new Set(input?.retryCodes)
       : RETRYABLE_STATUS_CODES;
     const backoffSettings = input?.backoffSettings;
+    const clientTotalTimeout =
+      this?.bigtable?.options?.BigtableClient?.clientConfig?.interfaces &&
+      this?.bigtable?.options?.BigtableClient?.clientConfig?.interfaces[
+        'google.bigtable.v2.Bigtable'
+      ]?.methods['ExecuteQuery']?.timeout_millis;
     return {
       maxRetries: backoffSettings?.maxRetries || DEFAULT_RETRY_COUNT,
       totalTimeout:
-        backoffSettings?.totalTimeoutMillis || DEFAULT_TOTAL_TIMEOUT_MS,
+        backoffSettings?.totalTimeoutMillis ||
+        clientTotalTimeout ||
+        DEFAULT_TOTAL_TIMEOUT_MS,
       retryCodes: rCodes,
       initialRetryDelayMillis:
         backoffSettings?.initialRetryDelayMillis ||
@@ -250,7 +257,6 @@ export class ExecuteQueryStateMachine {
     const reqOpts: google.bigtable.v2.IExecuteQueryRequest = {
       ...this.requestParams,
       preparedQuery: this.lastPreparedQueryBytes,
-      // protoFormat: google.bigtable.v2.ProtoFormat.create(),
       resumeToken: this.callerStream.getLatestResumeToken(),
     };
 
@@ -292,8 +298,10 @@ export class ExecuteQueryStateMachine {
   ) => {
     if (this.valuesStream !== null) {
       // assume old streams were scrached.
-      throw new Error(
-        'Internal error: making a request before streams from the last one was cleaned up.',
+      this.fail(
+        new Error(
+          'Internal error: making a request before streams from the last one was cleaned up.',
+        ),
       );
     }
 
@@ -322,6 +330,7 @@ export class ExecuteQueryStateMachine {
       this.valuesStream.removeAllListeners('data');
       this.valuesStream.removeAllListeners('end');
       this.valuesStream.removeAllListeners('close');
+      this.valuesStream.destroy();
       this.valuesStream = null;
     }
   };
@@ -400,7 +409,7 @@ export class ExecuteQueryStateMachine {
       clearTimeout(this.retryTimer);
       this.retryTimer = null;
     }
-    this.fail(new Error('Total timeout exceeded.'));
+    this.fail(new Error('Deadline exceeded.'));
   };
 
   private handleStreamError = (err: ServiceError): void => {
@@ -476,8 +485,10 @@ export class ExecuteQueryStateMachine {
         this.makeNewRequest(preparedQueryBytes, metadata);
       }
     } else {
-      throw new Error(
-        `handleQueryPlan can't be invoked on a current state ${this.state}`,
+      this.fail(
+        new Error(
+          `handleQueryPlan can't be invoked on a current state ${this.state}`,
+        ),
       );
     }
   };

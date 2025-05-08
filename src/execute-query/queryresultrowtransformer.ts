@@ -152,7 +152,7 @@ export class ExecuteQueryStreamTransformWithMetadata
     }
     if (value.arrayValue.values.length !== metadata.values.length) {
       throw new Error(
-        `Internal error - received Struct with ${value.arrayValue.values.length} values, but metadata has ${metadata.values.length} values.`,
+        `Internal error - received Struct with ${value.arrayValue.values.length} values, but metadata has ${metadata.values.length} fields.`,
       );
     }
     return new Struct(
@@ -196,9 +196,6 @@ export class ExecuteQueryStreamTransformWithMetadata
           | string
           | Uint8Array
           | null;
-        if (keyValue === null || keyValue === undefined) {
-          throw new Error('Internal error - received Map with key == null.');
-        }
         return [keyValue, this.valueToJsType(pair[1], metadata.valueType)];
       }),
     );

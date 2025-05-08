@@ -160,7 +160,7 @@ describe('Bigtable/EncodedKeyMap', () => {
       // iterators
 
       const keys = [...map.keys()];
-      assert.deepStrictEqual(keys[0].toString(), 'Buffer1');
+      assert.deepStrictEqual(keys[0]?.toString(), 'Buffer1');
       assert.deepStrictEqual(keys[0] instanceof Buffer, true);
       assert.deepStrictEqual(keys[1], 'stringKey1');
 
@@ -168,12 +168,13 @@ describe('Bigtable/EncodedKeyMap', () => {
       assert.deepStrictEqual(values[0], 'valueForBuffer1');
       assert.deepStrictEqual(values[1], 'valueForString1');
 
-      const resultForEach: [string | bigint | Uint8Array, SqlValue][] = [];
+      const resultForEach: [string | bigint | Uint8Array | null, SqlValue][] =
+        [];
       map.forEach((value, key) => {
         resultForEach.push([key, value]);
       });
 
-      assert.deepStrictEqual(resultForEach[0][0].toString(), 'Buffer1');
+      assert.deepStrictEqual(resultForEach[0][0]?.toString(), 'Buffer1');
       assert.deepStrictEqual(resultForEach[0][0] instanceof Buffer, true);
       assert.deepStrictEqual(resultForEach[0][1], 'valueForBuffer1');
       assert.deepStrictEqual(resultForEach[1][0], 'stringKey1');

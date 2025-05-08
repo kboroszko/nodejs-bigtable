@@ -92,27 +92,29 @@ export function ensureUint8Array(
     : Buffer.from(bytes, encoding || 'base64');
 }
 
-function _parseBufferToString(
-  key: bigint | string | Uint8Array,
-): bigint | string {
+function _parseBufferToMapKey(
+  key: bigint | string | Uint8Array | null,
+): bigint | string | null {
   // Uint8Array is always an instance of Buffer,
   // but we keep it in the if condition for TS linter's sake
   if (key instanceof Buffer || key instanceof Uint8Array) {
     const base64Key = key.toString('base64');
     return base64Key;
+  } else if (key === null) {
+    return null;
   } else {
     return key;
   }
 }
 
-type MapKey = bigint | string | Uint8Array;
+type MapKey = bigint | string | Uint8Array | null;
 // internal representation of the map contains the original key and value tuple
 type _MapValue = [MapKey, SqlValue];
 
 export class EncodedKeyMap
-  implements Map<bigint | string | Uint8Array, SqlValue>
+  implements Map<bigint | string | Uint8Array | null, SqlValue>
 {
-  private map_impl: Map<bigint | string, _MapValue>;
+  private map_impl: Map<bigint | string | null, _MapValue>;
   /**
    * Class representing a Map Value returned by ExecuteQuery. Native JS Map
    * does not support Buffer comparison - it compares object id and not
@@ -123,16 +125,20 @@ export class EncodedKeyMap
    * always all buffers or all strings) so we don't need to handle this.
    */
   constructor(
-    entries?: ReadonlyArray<[bigint | string | Uint8Array, SqlValue]> | null,
+    entries?: ReadonlyArray<
+      [bigint | string | Uint8Array | null, SqlValue]
+    > | null,
   ) {
     if (entries) {
       // Process entries to encode Buffer keys as base64
       const processedEntries = entries.map(([key, value]) => {
-        return [_parseBufferToString(key), [key, value]];
+        return [_parseBufferToMapKey(key), [key, value]];
       }) as ReadonlyArray<[bigint | string, _MapValue]>;
-      this.map_impl = new Map<bigint | string, _MapValue>(processedEntries);
+      this.map_impl = new Map<bigint | string | null, _MapValue>(
+        processedEntries,
+      );
     } else {
-      this.map_impl = new Map<bigint | string, _MapValue>();
+      this.map_impl = new Map<bigint | string | null, _MapValue>();
     }
   }
 
@@ -140,15 +146,15 @@ export class EncodedKeyMap
     this.map_impl.clear();
   }
 
-  delete(key: string | bigint | Uint8Array): boolean {
-    return this.map_impl.delete(_parseBufferToString(key));
+  delete(key: string | bigint | Uint8Array | null): boolean {
+    return this.map_impl.delete(_parseBufferToMapKey(key));
   }
 
   forEach(
     callbackfn: (
       value: SqlValue,
-      key: string | bigint | Uint8Array,
-      map: Map<string | bigint | Uint8Array, SqlValue>,
+      key: string | bigint | Uint8Array | null,
+      map: Map<string | bigint | Uint8Array | null, SqlValue>,
     ) => void,
     thisArg?: any,
   ): void {
@@ -157,19 +163,19 @@ export class EncodedKeyMap
     });
   }
 
-  has(key: string | bigint | Uint8Array): boolean {
-    return this.map_impl.has(_parseBufferToString(key));
+  has(key: string | bigint | Uint8Array | null): boolean {
+    return this.map_impl.has(_parseBufferToMapKey(key));
   }
 
   get size(): number {
     return this.map_impl.size;
   }
 
-  entries(): IterableIterator<[string | bigint | Uint8Array, SqlValue]> {
+  entries(): IterableIterator<[string | bigint | Uint8Array | null, SqlValue]> {
     return this.map_impl.values();
   }
 
-  keys(): IterableIterator<string | bigint | Uint8Array> {
+  keys(): IterableIterator<string | bigint | Uint8Array | null> {
     const iterator = this.map_impl.values();
     return {
       next: () => {
@@ -198,7 +204,7 @@ export class EncodedKeyMap
   }
 
   [Symbol.iterator](): IterableIterator<
-    [string | bigint | Uint8Array, SqlValue]
+    [string | bigint | Uint8Array | null, SqlValue]
   > {
     return this.entries();
   }
@@ -207,12 +213,12 @@ export class EncodedKeyMap
     return 'EncodedKeyMap';
   }
 
-  get(key: string | bigint | Uint8Array): SqlValue | undefined {
-    return this.map_impl.get(_parseBufferToString(key))?.[1];
+  get(key: string | bigint | Uint8Array | null): SqlValue | undefined {
+    return this.map_impl.get(_parseBufferToMapKey(key))?.[1];
   }
 
-  set(key: string | bigint | Uint8Array, value: SqlValue): this {
-    this.map_impl.set(_parseBufferToString(key), [key, value]);
+  set(key: string | bigint | Uint8Array | null, value: SqlValue): this {
+    this.map_impl.set(_parseBufferToMapKey(key), [key, value]);
     return this;
   }
 }

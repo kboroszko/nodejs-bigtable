@@ -150,7 +150,7 @@ function convertToMap(
 function convertMapEntry(
   value: SqlValue,
   type: SqlTypes.Type,
-  keyName: string | bigint | Uint8Array,
+  keyName: string | bigint | Uint8Array | null,
   keyOrValue: 'key' | 'value',
 ): protos.google.bigtable.v2.IValue {
   try {

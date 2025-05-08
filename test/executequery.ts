@@ -89,6 +89,24 @@ const performCallbacks = (callbacks: any[], interval: number) => {
   performNext();
 };
 
+const createExpiredQueryError = () => {
+  return {
+    code: grpc.status.FAILED_PRECONDITION,
+    details: 'failed precondition',
+    statusDetails: [
+      {
+        violations: [
+          {
+            type: 'PREPARED_QUERY_EXPIRED',
+            description:
+              'The prepared query has expired. Please re-issue the ExecuteQuery with a valid prepared query.',
+          },
+        ],
+      },
+    ],
+  };
+};
+
 describe('Bigtable/ExecuteQueryStateMachine', () => {
   const INSTANCE_ID = 'my-instance';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -280,10 +298,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
 
-      const expiredError = {
-        code: grpc.status.FAILED_PRECONDITION,
-        message: 'The prepared query has expired.',
-      };
+      const expiredError = createExpiredQueryError();
       BIGTABLE.request = () => bigtableStream as any;
       const preparedQuery = new MockPreparedQuery();
       const resultStream = instance.createExecuteQueryStream({
@@ -382,10 +397,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
 
-      const expiredError = {
-        code: grpc.status.FAILED_PRECONDITION,
-        message: 'The prepared query has expired.',
-      };
+      const expiredError = createExpiredQueryError();
       BIGTABLE.request = () => bigtableStream as any;
       const preparedQuery = new MockPreparedQuery();
       const resultStream = instance.createExecuteQueryStream({
@@ -484,10 +496,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
 
-      const expiredError = {
-        code: grpc.status.FAILED_PRECONDITION,
-        message: 'The prepared query has expired.',
-      };
+      const expiredError = createExpiredQueryError();
       BIGTABLE.request = () => bigtableStream as any;
       const preparedQuery = new MockPreparedQuery();
       const resultStream = instance.createExecuteQueryStream({
@@ -1169,10 +1178,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
         message: 'retryable error',
       };
 
-      const expiredError = {
-        code: grpc.status.FAILED_PRECONDITION,
-        message: 'The prepared query has expired.',
-      };
+      const expiredError = createExpiredQueryError();
 
       BIGTABLE.request = () => bigtableStream as any;
       const preparedQuery = new MockPreparedQuery();
@@ -1310,10 +1316,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
         message: 'retryable error',
       };
 
-      const expiredError = {
-        code: grpc.status.FAILED_PRECONDITION,
-        message: 'The prepared query has expired.',
-      };
+      const expiredError = createExpiredQueryError();
 
       BIGTABLE.request = () => bigtableStream as any;
       const preparedQuery = new MockPreparedQuery();
