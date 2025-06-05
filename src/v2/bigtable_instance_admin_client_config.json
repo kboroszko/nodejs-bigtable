@@ -17,88 +17,116 @@
           "rpc_timeout_multiplier": 1,
           "max_rpc_timeout_millis": 60000,
           "total_timeout_millis": 600000
+        },
+        "264268458a9e88347dbacbd9398202ff5885a40b": {
+          "initial_retry_delay_millis": 1000,
+          "retry_delay_multiplier": 2,
+          "max_retry_delay_millis": 60000,
+          "initial_rpc_timeout_millis": 60000,
+          "rpc_timeout_multiplier": 1,
+          "max_rpc_timeout_millis": 60000,
+          "total_timeout_millis": 600000
         }
       },
       "methods": {
         "CreateInstance": {
+          "timeout_millis": 300000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "GetInstance": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "ListInstances": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "UpdateInstance": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "PartialUpdateInstance": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "DeleteInstance": {
+          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "CreateCluster": {
+          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "GetCluster": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "ListClusters": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "UpdateCluster": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "PartialUpdateCluster": {
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "DeleteCluster": {
+          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "CreateAppProfile": {
+          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "GetAppProfile": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "ListAppProfiles": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "UpdateAppProfile": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "DeleteAppProfile": {
+          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "GetIamPolicy": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "SetIamPolicy": {
+          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "TestIamPermissions": {
-          "retry_codes_name": "non_idempotent",
-          "retry_params_name": "default"
+          "timeout_millis": 60000,
+          "retry_codes_name": "idempotent",
+          "retry_params_name": "264268458a9e88347dbacbd9398202ff5885a40b"
         },
         "ListHotTablets": {
           "timeout_millis": 60000,
