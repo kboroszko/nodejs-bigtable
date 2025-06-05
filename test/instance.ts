@@ -2716,7 +2716,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         }),
       ]);
       instance.executeQuery(preparedQuery, (err, result) => {
-        assert.notStrictEqual(err, null);
+        assert.strictEqual(result?.length, 1);
         done();
       });
     });

@@ -1089,19 +1089,15 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             };
             valuesStream = resultStream._stateMachine.valuesStream;
             bigtableStream.emit('error', retryableError);
-            // emit data after the error was emitted
-            valuesStream.emit('data', [
-              createProtoRows(undefined, undefined, undefined, {intValue: 2})
-                .results?.protoRowsBatch?.batchData,
-              'unreachableToken1',
-            ]);
           },
           () => {
             // emit data after the error was emitted
             valuesStream.emit('data', [
-              createProtoRows(undefined, undefined, undefined, {intValue: 3})
-                .results?.protoRowsBatch?.batchData,
-              'unreachableToken2',
+              [
+                createProtoRows(undefined, undefined, undefined, {intValue: 2})
+                  .results?.protoRowsBatch?.batchData,
+              ],
+              'unreachableToken',
             ]);
           },
           () => {
@@ -1121,7 +1117,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
               'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 4}),
+              createProtoRows(undefined, undefined, undefined, {intValue: 3}),
             );
           },
           () => {
@@ -1130,7 +1126,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
               'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows('token', 111, undefined, {intValue: 5}),
+              createProtoRows('token', 111, undefined, {intValue: 4}),
             );
           },
           () => {
@@ -1145,8 +1141,8 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(resultStream._stateMachine.state, 'Finished');
             assert.equal(responses.length, 2);
             // the first message before the retry should have been discarded
-            assert.equal(responses[0].get(0), 4);
-            assert.equal(responses[1].get(0), 5);
+            assert.equal(responses[0].get(0), 3);
+            assert.equal(responses[1].get(0), 4);
             done();
           },
         ],
