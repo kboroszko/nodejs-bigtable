@@ -1,6 +1,6 @@
 import {Readable} from 'stream';
 import {google} from '../../protos/protos';
-import {PreparedQuery} from '../../src/execute-query/preparedquery';
+import {PreparedStatement} from '../../src/execute-query/preparedstatement';
 
 export const createMetadata = (
   ...values: [string | null, google.bigtable.v2.Type][]
@@ -19,16 +19,16 @@ export const createMetadata = (
   });
 };
 
-export const createPreparedQuery = (
+export const createPreparedStatement = (
   ...values: [string | null, google.bigtable.v2.Type][]
-): PreparedQuery => {
+): PreparedStatement => {
   const metadataPB = createMetadata(...values).metadata!;
   const prepareQueryResponse = google.bigtable.v2.PrepareQueryResponse.create({
     metadata: metadataPB,
     preparedQuery: 'xd',
     validUntil: null,
   });
-  return new PreparedQuery(
+  return new PreparedStatement(
     undefined as any,
     prepareQueryResponse,
     {} as any,

@@ -9,7 +9,7 @@ import {ServiceError, CallOptions} from 'google-gax';
 
 export const SHOULD_REFRESH_SOON_PERIOD_MS = 1000;
 
-export type PreparedQueryDataCallback = (
+export type PreparedStatementDataCallback = (
   err?: Error,
   preparedQueryBytes?: Uint8Array | string,
   metadata?: SqlTypes.ResultSetMetadata,
@@ -32,7 +32,7 @@ interface IRetryRequest {
  * a refresh to happen. If the refresh fails, all awaiting getData calls
  * also return an error.
  */
-export class PreparedQuery extends EventEmitter {
+export class PreparedStatement extends EventEmitter {
   private bigtable: Bigtable;
   private retryRequest: IRetryRequest;
   private metadata: SqlTypes.ResultSetMetadata;
@@ -168,7 +168,10 @@ export class PreparedQuery extends EventEmitter {
    * @param callback called when query plan is available
    * @param timeoutMs when callback should be called with an error.
    */
-  getData = (callback: PreparedQueryDataCallback, timeoutMs: number): void => {
+  getData = (
+    callback: PreparedStatementDataCallback,
+    timeoutMs: number,
+  ): void => {
     this.scheduleRefreshIfNeeded();
     if (this.isExpired()) {
       const listener = new CallbackWithTimeout(callback, timeoutMs);
@@ -216,11 +219,11 @@ export class PreparedQuery extends EventEmitter {
  * Otherwise it is called with provided args.
  */
 class CallbackWithTimeout {
-  private callback: PreparedQueryDataCallback | null;
+  private callback: PreparedStatementDataCallback | null;
   private timer: NodeJS.Timeout | null;
   private isValid: boolean;
 
-  constructor(callback: PreparedQueryDataCallback, timeout: number) {
+  constructor(callback: PreparedStatementDataCallback, timeout: number) {
     this.callback = callback;
     this.isValid = true;
     this.timer = setTimeout(() => {
@@ -236,7 +239,7 @@ class CallbackWithTimeout {
    * If this object has not yet been invalidated, the callback is called.
    * @param args
    */
-  tryInvoke(...args: Parameters<PreparedQueryDataCallback>): void {
+  tryInvoke(...args: Parameters<PreparedStatementDataCallback>): void {
     if (!this.isValid || !this.callback) {
       return;
     }

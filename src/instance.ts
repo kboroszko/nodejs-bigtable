@@ -69,7 +69,6 @@ import {Bigtable} from '.';
 import {google} from '../protos/protos';
 import {Backup, RestoreTableCallback, RestoreTableResponse} from './backup';
 import {ClusterUtils} from './utils/cluster';
-import {AuthorizedView} from './authorized-view';
 
 import * as SqlTypes from './execute-query/types';
 import {
@@ -88,7 +87,7 @@ import {
   createCallerStream,
   ExecuteQueryStateMachine,
 } from './execute-query/executequerystatemachine';
-import {PreparedQuery} from './execute-query/preparedquery';
+import {PreparedStatement} from './execute-query/preparedstatement';
 
 export interface ClusterInfo extends BasicClusterConfig {
   id: string;
@@ -180,25 +179,25 @@ export type ExecuteQueryCallback = (
 ) => void;
 
 export interface ExecuteQueryOptions {
-  preparedQuery: PreparedQuery;
+  preparedStatement: PreparedStatement;
   parameters?: {[param: string]: ExecuteQueryParameterValue};
   retryOptions?: CallOptions;
   encoding?: BufferEncoding;
 }
 export type ExecuteQueryResponse = [QueryResultRow[]];
 
-export type PrepareQueryCallback = (
+export type PrepareStatementCallback = (
   err: Error | null,
-  preparedQuery?: PreparedQuery,
+  preparedStatement?: PreparedStatement,
 ) => void;
 
-export interface PrepareQueryOptions {
+export interface PrepareStatementOptions {
   query: string;
   parameterTypes?: {[param: string]: SqlTypes.Type};
   retryOptions?: CallOptions;
   encoding?: BufferEncoding;
 }
-export type PrepareQueryResponse = [PreparedQuery];
+export type PrepareStatementResponse = [PreparedStatement];
 
 /**
  * Create an Instance object to interact with a Cloud Bigtable instance.
@@ -1356,7 +1355,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
         : callback!;
 
     if (policy.etag !== null && policy.etag !== undefined) {
-      (policy.etag as {} as Buffer) = Buffer.from(policy.etag as string);
+      (policy.etag as {} as Buffer) = Buffer.from(policy.etag);
     }
     const reqOpts = {
       resource: this.name,
@@ -1523,44 +1522,36 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     );
   }
 
-  /**
-   * Gets an Authorized View object for making authorized view grpc calls.
-   *
-   * @param {string} tableName The name for the Table
-   * @param {string} viewName The name for the Authorized view
-   */
-  view(tableName: string, viewName: string): AuthorizedView {
-    return new AuthorizedView(this, tableName, viewName);
-  }
-
-  prepareQuery(options: PrepareQueryOptions): Promise<PrepareQueryResponse>;
-  prepareQuery(
-    options: PrepareQueryOptions,
-    callback: PrepareQueryCallback,
+  prepareStatement(
+    options: PrepareStatementOptions,
+  ): Promise<PrepareStatementResponse>;
+  prepareStatement(
+    options: PrepareStatementOptions,
+    callback: PrepareStatementCallback,
   ): void;
-  prepareQuery(query: string): Promise<PrepareQueryResponse>;
-  prepareQuery(query: string, callback: PrepareQueryCallback): void;
+  prepareStatement(query: string): Promise<PrepareStatementResponse>;
+  prepareStatement(query: string, callback: PrepareStatementCallback): void;
   /**
    * Prepare an SQL query to be executed on an instance.
    *
-   * @param {?string} [query] PreparedQuery object representing a query
+   * @param {?string} [query] PreparedStatement object representing a query
    *   to execute.
-   * @param {string} [opts.query] Query string for which we want to construct the preparedQuery object.
+   * @param {string} [opts.query] Query string for which we want to construct the preparedStatement object.
    * @param {object} [opts.parameterTypes] Object mapping names of parameters to their types.
    * Type hints should be constructed using factory functions such as {@link Int64}
    * @param {CallOptions} [opts.retryOptions] gax's CallOptions wich are passed straight to gax.
-   *   The same retry options are also used when automatically refreshing the PreparedQuery.
+   *   The same retry options are also used when automatically refreshing the PreparedStatement.
    *
    * @param {function} callback The callback function.
    * @param {?error} callback.err An error returned while making this request.
-   * @param {?PreparedQuery} callback.preparedQuery The preparedQuery object used to perform the executeQuery operation.
+   * @param {?PreparedStatement} callback.preparedStatement The preparedStatement object used to perform the executeQuery operation.
    *
    */
-  prepareQuery(
-    queryOrOpts: string | PrepareQueryOptions,
-    callback?: PrepareQueryCallback,
-  ): void | Promise<PrepareQueryResponse> {
-    const opts: PrepareQueryOptions =
+  prepareStatement(
+    queryOrOpts: string | PrepareStatementOptions,
+    callback?: PrepareStatementCallback,
+  ): void | Promise<PrepareStatementResponse> {
+    const opts: PrepareStatementOptions =
       typeof queryOrOpts === 'string' ? {query: queryOrOpts} : queryOrOpts;
 
     const protoParamTypes = parseParameterTypes(opts.parameterTypes || {});
@@ -1583,7 +1574,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
       try {
         callback!(
           null,
-          new PreparedQuery(
+          new PreparedStatement(
             this.bigtable,
             args[1]!,
             request,
@@ -1601,16 +1592,18 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     options: ExecuteQueryOptions,
     callback: ExecuteQueryCallback,
   ): void;
-  executeQuery(preparedQuery: PreparedQuery): Promise<ExecuteQueryResponse>;
   executeQuery(
-    preparedQuery: PreparedQuery,
+    preparedStatement: PreparedStatement,
+  ): Promise<ExecuteQueryResponse>;
+  executeQuery(
+    preparedStatement: PreparedStatement,
     callback: ExecuteQueryCallback,
   ): void;
   /**
    * Execute a SQL query on an instance.
    *
    *
-   * @param {?PreparedQuery} [preparedQuery] PreparedQuery object representing a query
+   * @param {?PreparedStatement} [preparedStatement] PreparedStatement object representing a query
    *   to execute.
    * @param {?object} [options] Configuration object. See
    *     {@link Instance#createExecuteQueryStream} for a complete list of options.
@@ -1624,14 +1617,14 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
    * region_tag:bigtable_api_execute_query
    */
   executeQuery(
-    preparedQueryOrOpts: PreparedQuery | ExecuteQueryOptions,
+    preparedStatementOrOpts: PreparedStatement | ExecuteQueryOptions,
     callback?: ExecuteQueryCallback,
   ): void | Promise<ExecuteQueryResponse> {
     let opts: ExecuteQueryOptions;
-    if (preparedQueryOrOpts instanceof PreparedQuery) {
-      opts = {preparedQuery: preparedQueryOrOpts};
+    if (preparedStatementOrOpts instanceof PreparedStatement) {
+      opts = {preparedStatement: preparedStatementOrOpts};
     } else {
-      opts = preparedQueryOrOpts;
+      opts = preparedStatementOrOpts;
     }
     const stream = this.createExecuteQueryStream(opts);
 
@@ -1645,7 +1638,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
   /**
    * Execute a SQL query on an instance.
    *
-   * @param {PreparedQuery} [preparedQuery] SQL query to execute. Parameters can be specified using @name notation.
+   * @param {PreparedStatement} [preparedStatement] SQL query to execute. Parameters can be specified using @name notation.
    * @param {object} [opts] Configuration object.
    * @param {object} [opts.parameters] Object mapping names of parameters used in the query to JS values.
    * @param {object} [opts.retryOptions] Retry options used for executing the query. Note that the only values
@@ -1696,7 +1689,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     const protoParams: {[k: string]: google.bigtable.v2.IValue} | null =
       parseParameters(
         opts.parameters || {},
-        opts.preparedQuery.getParameterTypes(),
+        opts.preparedStatement.getParameterTypes(),
       );
 
     const readerStream = new ProtobufReaderTransformer(metadataConsumer);
@@ -1719,7 +1712,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     const stateMachine = new ExecuteQueryStateMachine(
       this.bigtable,
       callerStream,
-      opts.preparedQuery,
+      opts.preparedStatement,
       reqOpts,
       opts.retryOptions?.retry,
       opts.encoding,

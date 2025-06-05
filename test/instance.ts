@@ -50,12 +50,12 @@ import {PreciseDate} from '@google-cloud/precise-date';
 import Long = require('long');
 import {
   createMetadata,
-  createPreparedQuery,
+  createPreparedStatement,
   createPrepareQueryResponse,
   createProtoRows,
   pbType,
 } from './utils/proto-bytes';
-import {PreparedQuery} from '../src/execute-query/preparedquery';
+import {PreparedStatement} from '../src/execute-query/preparedstatement';
 import * as SqlValues from '../src/execute-query/values';
 
 const concat = require('concat-stream');
@@ -112,10 +112,10 @@ class FakeTable extends Table {
 // convenience function for ExecuteQuery tests
 function executeQueryResultWithMetadata(
   instance: any,
-  preparedQuery: PreparedQuery | null,
+  preparedStatement: PreparedStatement | null,
   callback: (...args: any[]) => void,
 ): void {
-  const stream = instance.createExecuteQueryStream({preparedQuery});
+  const stream = instance.createExecuteQueryStream({preparedStatement});
   stream.on('error', callback!).pipe(
     concat((rows: QueryResultRow[]) => {
       const metadata = stream.getMetadata();
@@ -2066,7 +2066,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
 
   describe('execute', () => {
     it('parses non-composite types', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['int64', pbType({int64Type: {}})],
         ['float64', pbType({float64Type: {}})],
         ['string', pbType({stringType: {}})],
@@ -2097,7 +2097,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(metadata!.get(0).type, 'int64');
           assert.strictEqual(metadata!.get(1).type, 'float64');
@@ -2120,7 +2120,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('parses multiple rows', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'f1',
         pbType({int64Type: {}}),
       ]);
@@ -2132,7 +2132,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
           assert.strictEqual(metadata!.get(0).type, 'int64');
@@ -2146,7 +2146,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('handles nulls properly', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
@@ -2168,7 +2168,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(result?.length, 5);
 
@@ -2193,7 +2193,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('handles nulls for all types', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['int64', pbType({int64Type: {}})],
         ['float64', pbType({float64Type: {}})],
         ['string', pbType({stringType: {}})],
@@ -2298,7 +2298,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(result![0].get(0), null);
           assert.strictEqual(result![0].get(1), null);
@@ -2333,7 +2333,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('parses multiple rows in one batch', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
@@ -2356,7 +2356,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
           assert.strictEqual(metadata!.get(1), metadata!.get('f2'));
@@ -2383,7 +2383,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('parses an array of ints', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'f1',
         pbType({arrayType: {elementType: pbType({int64Type: {}})}}),
       ]);
@@ -2396,7 +2396,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
           assert.strictEqual(metadata!.get(0).type, 'array');
@@ -2414,7 +2414,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('parses a struct', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         [
           'f2',
@@ -2444,7 +2444,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(metadata!.get(0), metadata!.get('f1'));
           assert.strictEqual(metadata!.get(1), metadata!.get('f2'));
@@ -2470,7 +2470,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('parses a map', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'f1',
         pbType({
           mapType: {
@@ -2525,7 +2525,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           const mapType = metadata!.get(0);
           assert.strictEqual(mapType.type, 'map');
@@ -2551,7 +2551,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('map retains last encountered value for duplicate key', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'f1',
         pbType({
           mapType: {
@@ -2585,7 +2585,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           const mapType = metadata!.get(0);
           assert.strictEqual(mapType.type, 'map');
@@ -2604,7 +2604,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('accessing duplicated struct field throws', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'structColumn',
         pbType({
           structType: {
@@ -2625,7 +2625,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, result, metadata) => {
           assert.strictEqual(metadata!.get(0).type, 'struct');
 
@@ -2659,7 +2659,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       } as Bigtable;
       const instance2 = new Instance(BIGTABLE2, INSTANCE_ID);
 
-      instance2.prepareQuery('query', (err, result) => {
+      instance2.prepareStatement('query', (err, result) => {
         assert.notStrictEqual(err, null);
         assert.ok(err instanceof Error);
         done();
@@ -2686,14 +2686,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         },
       } as Bigtable;
       const instance2 = new Instance(BIGTABLE2, INSTANCE_ID);
-      instance2.prepareQuery('query', (err, result) => {
+      instance2.prepareStatement('query', (err, result) => {
         assert.notStrictEqual(err, null);
         done();
       });
     });
 
     it('map with null key is rejected', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'map',
         pbType({
           mapType: {
@@ -2715,14 +2715,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           },
         }),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.strictEqual(result?.length, 1);
         done();
       });
     });
 
     it('map with null value is ok', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         'map',
         pbType({
           mapType: {
@@ -2744,14 +2744,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           },
         }),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.strictEqual(result?.length, 1);
         done();
       });
     });
 
     it('bigints are correctly converted to longs', done => {
-      const preparedQuery = new PreparedQuery(
+      const preparedStatement = new PreparedStatement(
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
@@ -2767,7 +2767,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       instance.executeQuery(
         {
-          preparedQuery,
+          preparedStatement,
           parameters: {
             a: BigInt(1),
             b: BigInt(-1),
@@ -2831,7 +2831,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     it('value not matching provided type is rejected', () => {
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2839,7 +2839,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 'a'},
             } as any,
             () => {},
@@ -2849,7 +2849,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2857,7 +2857,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: BigInt(1)},
             } as any,
             () => {},
@@ -2867,7 +2867,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2875,7 +2875,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 1},
             } as any,
             () => {},
@@ -2885,7 +2885,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2893,7 +2893,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 1},
             } as any,
             () => {},
@@ -2903,7 +2903,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2911,7 +2911,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 1},
             } as any,
             () => {},
@@ -2921,7 +2921,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2929,7 +2929,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 1},
             } as any,
             () => {},
@@ -2942,7 +2942,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2950,7 +2950,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 1},
             } as any,
             () => {},
@@ -2960,7 +2960,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2968,7 +2968,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: 1},
             } as any,
             () => {},
@@ -2978,7 +2978,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -2986,7 +2986,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: [1, 'a']},
             } as any,
             () => {},
@@ -3001,7 +3001,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       // but we want to check it throws an error
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -3009,7 +3009,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {
                 a: new Map<bigint, number>([
                   [BigInt(1), 2],
@@ -3024,7 +3024,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       );
       assert.throws(
         () => {
-          const preparedQuery = new PreparedQuery(
+          const preparedStatement = new PreparedStatement(
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
@@ -3037,7 +3037,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           );
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {
                 a: SqlTypes.Struct({
                   name: 'f1',
@@ -3053,7 +3053,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('null value is accepted', done => {
-      const preparedQuery = new PreparedQuery(
+      const preparedStatement = new PreparedStatement(
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
@@ -3066,7 +3066,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       instance.executeQuery(
         {
-          preparedQuery,
+          preparedStatement,
           parameters: {a: null},
         } as any,
         () => {
@@ -3081,7 +3081,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('parameter type is used for null', done => {
-      const preparedQuery = new PreparedQuery(
+      const preparedStatement = new PreparedStatement(
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
@@ -3101,7 +3101,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       instance.executeQuery(
         {
-          preparedQuery,
+          preparedStatement,
           parameters: {
             a: null,
             b: null,
@@ -3136,7 +3136,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('large bigints are rejected', () => {
-      const preparedQuery = new PreparedQuery(
+      const preparedStatement = new PreparedStatement(
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
@@ -3146,7 +3146,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         () => {
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: BigInt('-9223372036854775809')},
             } as any,
             () => {},
@@ -3161,7 +3161,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         () => {
           instance.executeQuery(
             {
-              preparedQuery,
+              preparedStatement,
               parameters: {a: BigInt('9223372036854775808')},
             } as any,
             () => {},
@@ -3175,7 +3175,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('duplicate struct field names are not accessible by name', done => {
-      const preparedQuery = createPreparedQuery([
+      const preparedStatement = createPreparedStatement([
         's',
         pbType({
           structType: {
@@ -3194,7 +3194,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           },
         }),
       ]);
-      instance.executeQuery(preparedQuery, (err, rows) => {
+      instance.executeQuery(preparedStatement, (err, rows) => {
         const struct = rows![0].get('s')! as Struct;
         assert.strictEqual(struct.get(0), BigInt(1));
         assert.strictEqual(struct.get(1), BigInt(2));
@@ -3208,7 +3208,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('duplicate row field names are not accessible by name', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
         ['f1', pbType({int64Type: {}})],
@@ -3225,7 +3225,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       ]);
       executeQueryResultWithMetadata(
         instance,
-        preparedQuery,
+        preparedStatement,
         (err, rows, metadata) => {
           const row = rows![0];
           assert.strictEqual(row.get(0), BigInt(1));
@@ -3252,14 +3252,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('unfinished batch is detected', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(undefined, undefined, undefined, {intValue: 3}),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.notStrictEqual(err, null);
         assert.ok(err instanceof Error);
         done();
@@ -3267,14 +3267,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('token without batch ending detected', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows('token', undefined, undefined, {intValue: 3}),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.notStrictEqual(err, null);
         assert.ok(err instanceof Error);
         done();
@@ -3282,7 +3282,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('reset works', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
@@ -3313,7 +3313,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         respWithReset2,
         createProtoRows('token', 222, undefined, {intValue: 5}, {intValue: 6}),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.equal(err, null);
         assert.strictEqual(result![0].get(0), BigInt(3));
         assert.strictEqual(result![0].get(1), BigInt(4));
@@ -3324,7 +3324,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('partial row after token detected', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
@@ -3338,7 +3338,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           {intValue: 3},
         ),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.notStrictEqual(err, null);
         assert.ok(err instanceof Error);
         done();
@@ -3346,7 +3346,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     });
 
     it('partial row after batch checksum detected', done => {
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
@@ -3361,7 +3361,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         ),
         createProtoRows('token1', 222, undefined, {intValue: 4}),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.notStrictEqual(err, null);
         assert.ok(err instanceof Error);
         done();
@@ -3370,7 +3370,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
 
     it('cheksum fail detected', done => {
       checksumIsValid = false;
-      const preparedQuery = createPreparedQuery(
+      const preparedStatement = createPreparedStatement(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
       );
@@ -3384,7 +3384,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         ),
         createProtoRows('token1', 222, undefined, {intValue: 3}, {intValue: 4}),
       ]);
-      instance.executeQuery(preparedQuery, (err, result) => {
+      instance.executeQuery(preparedStatement, (err, result) => {
         assert.notStrictEqual(err, null);
         assert.ok(err instanceof Error);
         done();

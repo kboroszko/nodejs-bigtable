@@ -33,18 +33,18 @@ const executeQuery = ({clientMap}) =>
       const [parameters, parameterTypes] = await parseParameters(
         request.params,
       );
-      const [preparedQuery] = await instance.prepareQuery({
+      const [preparedStatement] = await instance.prepareStatement({
         query: request.query,
         parameterTypes: parameterTypes,
       });
       const [rows] = await instance.executeQuery({
-        preparedQuery,
+        preparedStatement,
         parameters: parameters,
         retryOptions: {},
       });
 
-      const parsedMetadata = await parseMetadata(preparedQuery);
-      const parsedRows = await parseRows(preparedQuery, rows);
+      const parsedMetadata = await parseMetadata(preparedStatement);
+      const parsedRows = await parseRows(preparedStatement, rows);
       return {
         status: {code: grpc.status.OK, details: []},
         rows: parsedRows,

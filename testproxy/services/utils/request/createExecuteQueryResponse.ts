@@ -19,7 +19,7 @@ import {
   convertJsValueToValue,
   executeQueryTypeToPBType,
 } from '../../../../src/execute-query/parameterparsing';
-import {PreparedQuery} from '../../../../src/execute-query/preparedquery';
+import {PreparedStatement} from '../../../../src/execute-query/preparedstatement';
 import {ExecuteQueryStreamTransformWithMetadata} from '../../../../src/execute-query/queryresultrowtransformer';
 import {
   QueryResultRow,
@@ -31,11 +31,11 @@ import {
 } from '../../../../src/execute-query/values';
 import * as is from 'is';
 
-async function getMetadataFromPreparedQuery(
-  preparedQuery: PreparedQuery,
+async function getMetadataFromPreparedStatement(
+  preparedStatement: PreparedStatement,
 ): Promise<SqlTypes.ResultSetMetadata> {
   return await new Promise((resolve, reject) => {
-    preparedQuery.getData(
+    preparedStatement.getData(
       (
         err?: Error,
         preparedQueryBytes?: Uint8Array | string,
@@ -52,8 +52,8 @@ async function getMetadataFromPreparedQuery(
   });
 }
 
-export async function parseMetadata(preparedQuery: PreparedQuery) {
-  const metadata = await getMetadataFromPreparedQuery(preparedQuery);
+export async function parseMetadata(preparedStatement: PreparedStatement) {
+  const metadata = await getMetadataFromPreparedStatement(preparedStatement);
   const values = metadata.columns.map((v, i) => {
     return [metadata.getFieldNameAtIndex(i), executeQueryTypeToPBType(v)];
   });
@@ -186,10 +186,10 @@ function convertAnyValueToPb(
 }
 
 export async function parseRows(
-  preparedQuery: PreparedQuery,
+  preparedStatement: PreparedStatement,
   rows: QueryResultRow[],
 ) {
-  const metadata = await getMetadataFromPreparedQuery(preparedQuery);
+  const metadata = await getMetadataFromPreparedStatement(preparedStatement);
   const parsedRows = rows.map(row => {
     const rowValues = metadata.columns.map((type, i) => {
       const value = row.get(i);

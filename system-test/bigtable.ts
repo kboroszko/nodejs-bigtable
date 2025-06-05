@@ -791,7 +791,7 @@ describe('Bigtable', () => {
 
     describe('fetching data', () => {
       it('should execute a query', async () => {
-        const [preparedQuery] = await INSTANCE.prepareQuery({
+        const [preparedStatement] = await INSTANCE.prepareStatement({
           query:
             'SELECT @stringParam AS strCol, @bytesParam as bytesCol, @int64Param AS intCol, @doubleParam AS doubleCol,\n' +
             '@floatParam AS floatCol, @boolParam AS boolCol, @tsParam AS tsCol, @dateParam AS dateCol,\n' +
@@ -842,7 +842,7 @@ describe('Bigtable', () => {
           stringArrayParam: ['test', 'test'],
         };
         const [rows] = (await INSTANCE.executeQuery({
-          preparedQuery,
+          preparedStatement,
           parameters: params,
         })) as any as [Row[]];
         assert(rows[0] instanceof QueryResultRow);

@@ -1,5 +1,7 @@
-import {Duplex} from 'stream';
-import {PreparedQuery, PreparedQueryDataCallback} from './preparedquery';
+import {
+  PreparedStatement,
+  PreparedStatementDataCallback,
+} from './preparedstatement';
 import {Bigtable} from '..';
 import {ServiceError, RetryOptions} from 'google-gax';
 import {google} from '../../protos/protos';
@@ -9,7 +11,6 @@ import {ByteBufferTransformer} from './bytebuffertransformer';
 import {
   DEFAULT_BACKOFF_SETTINGS,
   DEFAULT_RETRY_COUNT,
-  isCancelError,
   isExpiredQueryError,
   isRstStreamError,
   RETRYABLE_STATUS_CODES,
@@ -59,7 +60,7 @@ interface StreamRetryOptions {
 export type State =
   /**
    * This is the starting state. When the executeQuery starts we try to
-   * fetch the query plan from the preparedQuery object. It is done via a callback
+   * fetch the query plan from the PreparedStatement object. It is done via a callback
    * If the query plan is expired, it might take time to refresh and the callback
    * won't be called immediately.
    */
@@ -169,8 +170,8 @@ export class ExecuteQueryStateMachine {
   private retryOptions: StreamRetryOptions;
   private valuesStream: AbortableDuplex | null;
   private requestParams: any;
-  private lastPreparedQueryBytes?: Uint8Array | string;
-  private preparedQuery: PreparedQuery;
+  private lastPreparedStatementBytes?: Uint8Array | string;
+  private preparedStatement: PreparedStatement;
   private state: State;
   private deadlineTs: number;
   private protoBytesEncoding?: BufferEncoding;
@@ -181,7 +182,7 @@ export class ExecuteQueryStateMachine {
   constructor(
     bigtable: Bigtable,
     callerStream: CallerStream,
-    preparedQuery: PreparedQuery,
+    preparedStatement: PreparedStatement,
     requestParams: any,
     retryOptions?: Partial<RetryOptions> | null,
     protoBytesEncoding?: BufferEncoding,
@@ -194,7 +195,7 @@ export class ExecuteQueryStateMachine {
     this.retryOptions = this.parseRetryOptions(retryOptions);
     this.deadlineTs = Date.now() + this.retryOptions.totalTimeout;
     this.valuesStream = null;
-    this.preparedQuery = preparedQuery;
+    this.preparedStatement = preparedStatement;
     this.protoBytesEncoding = protoBytesEncoding;
     this.numErrors = 0;
     this.retryTimer = null;
@@ -204,7 +205,7 @@ export class ExecuteQueryStateMachine {
     );
 
     this.state = 'AwaitingQueryPlan';
-    this.preparedQuery.getData(
+    this.preparedStatement.getData(
       this.handleQueryPlan,
       this.calculateTotalTimeout(),
     );
@@ -256,7 +257,7 @@ export class ExecuteQueryStateMachine {
   private createValuesStream = (): AbortableDuplex => {
     const reqOpts: google.bigtable.v2.IExecuteQueryRequest = {
       ...this.requestParams,
-      preparedQuery: this.lastPreparedQueryBytes,
+      preparedStatement: this.lastPreparedStatementBytes,
       resumeToken: this.callerStream.getLatestResumeToken(),
     };
 
@@ -293,7 +294,7 @@ export class ExecuteQueryStateMachine {
   };
 
   private makeNewRequest = (
-    preparedQueryBytes?: Uint8Array | string,
+    preparedStatementBytes?: Uint8Array | string,
     metadata?: SqlTypes.ResultSetMetadata,
   ) => {
     if (this.valuesStream !== null) {
@@ -305,8 +306,8 @@ export class ExecuteQueryStateMachine {
       );
     }
 
-    if (preparedQueryBytes) {
-      this.lastPreparedQueryBytes = preparedQueryBytes;
+    if (preparedStatementBytes) {
+      this.lastPreparedStatementBytes = preparedStatementBytes;
     }
     if (metadata) {
       this.callerStream.updateMetadata(metadata);
@@ -365,16 +366,16 @@ export class ExecuteQueryStateMachine {
   private startNextAttempt = (): void => {
     if (this.state === 'DrainAndRefreshQueryPlan') {
       this.state = 'AwaitingQueryPlan';
-      this.preparedQuery.getData(
+      this.preparedStatement.getData(
         this.handleQueryPlan,
         this.calculateTotalTimeout(),
       );
     } else if (this.state === 'DrainingBeforeResumeToken') {
       this.state = 'BeforeFirstResumeToken';
-      this.makeNewRequest(this.lastPreparedQueryBytes);
+      this.makeNewRequest(this.lastPreparedStatementBytes);
     } else if (this.state === 'DrainingAfterResumeToken') {
       this.state = 'AfterFirstResumeToken';
-      this.makeNewRequest(this.lastPreparedQueryBytes);
+      this.makeNewRequest(this.lastPreparedStatementBytes);
     } else {
       this.fail(
         new Error(
@@ -446,7 +447,7 @@ export class ExecuteQueryStateMachine {
       } else if (this.state === 'BeforeFirstResumeToken') {
         this.state = 'DrainAndRefreshQueryPlan';
         // If the server returned the "expired query error" we mark it as expired.
-        this.preparedQuery.markAsExpired();
+        this.preparedStatement.markAsExpired();
         this.callerStream.onDrain(this.handleDrainingDone);
       } else {
         this.fail(
@@ -460,16 +461,16 @@ export class ExecuteQueryStateMachine {
     }
   };
 
-  private handleQueryPlan: PreparedQueryDataCallback = (
+  private handleQueryPlan: PreparedStatementDataCallback = (
     err?: Error,
-    preparedQueryBytes?: Uint8Array | string,
+    preparedStatementBytes?: Uint8Array | string,
     metadata?: SqlTypes.ResultSetMetadata,
   ) => {
     if (this.state === 'AwaitingQueryPlan') {
       if (err) {
         this.numErrors += 1;
         if (this.numErrors <= this.retryOptions.maxRetries) {
-          this.preparedQuery.getData(
+          this.preparedStatement.getData(
             this.handleQueryPlan,
             this.calculateTotalTimeout(),
           );
@@ -482,7 +483,7 @@ export class ExecuteQueryStateMachine {
         }
       } else {
         this.state = 'BeforeFirstResumeToken';
-        this.makeNewRequest(preparedQueryBytes, metadata);
+        this.makeNewRequest(preparedStatementBytes, metadata);
       }
     } else {
       this.fail(

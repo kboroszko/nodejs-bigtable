@@ -31,9 +31,9 @@ import {
 } from './utils/proto-bytes';
 import {QueryResultRow} from '../src/execute-query/values';
 import {
-  PreparedQuery,
+  PreparedStatement,
   SHOULD_REFRESH_SOON_PERIOD_MS,
-} from '../src/execute-query/preparedquery';
+} from '../src/execute-query/preparedstatement';
 import {MetadataConsumer} from '../src/execute-query/metadataconsumer';
 import {PassThrough} from 'stream';
 import * as SqlValues from '../src/execute-query/values';
@@ -58,7 +58,7 @@ const fakePromisify = Object.assign({}, promisify, {
   },
 });
 
-class MockPreparedQuery {
+class MockPreparedStatement {
   callbacks: any[] = [];
   markedAsExpired = false;
   getData = (cb: any, timeout: any) => {
@@ -146,9 +146,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -159,7 +159,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -230,9 +230,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -244,15 +244,15 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](new Error('fetching QP failed'));
+            preparedStatement.callbacks[0](new Error('fetching QP failed'));
           },
           () => {
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 2);
-            preparedQuery.callbacks[1](
+            assert.equal(preparedStatement.callbacks.length, 2);
+            preparedStatement.callbacks[1](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -300,9 +300,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
 
       const expiredError = createExpiredQueryError();
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -314,10 +314,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -339,15 +339,15 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
               'DrainAndRefreshQueryPlan',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
-            assert.equal(preparedQuery.markedAsExpired, true);
+            assert.equal(preparedStatement.markedAsExpired, true);
             // speed up the retry timer
             clearTimeout(resultStream._stateMachine.retryTimer);
             resultStream._stateMachine.startNextAttempt();
           },
           () => {
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 2);
-            preparedQuery.callbacks[1](
+            assert.equal(preparedStatement.callbacks.length, 2);
+            preparedStatement.callbacks[1](
               undefined,
               'bytes',
               createResultSetMetadata(['f2', pbType({int64Type: {}})]),
@@ -373,7 +373,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(resultStream._stateMachine.state, 'Finished');
             assert.throws(() => {
-              // we make sure that the column name from the first preparedQuery is not present.
+              // we make sure that the column name from the first preparedStatement is not present.
               responses[0].get('f1');
             });
             assert.equal(responses[0].get('f2'), 1);
@@ -399,9 +399,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
 
       const expiredError = createExpiredQueryError();
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -413,10 +413,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -453,8 +453,8 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           },
           () => {
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 2);
-            preparedQuery.callbacks[1](
+            assert.equal(preparedStatement.callbacks.length, 2);
+            preparedStatement.callbacks[1](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -498,9 +498,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
 
       const expiredError = createExpiredQueryError();
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       const rowsEmitted = 0;
@@ -518,10 +518,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -564,9 +564,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       const responses: QueryResultRow[] = [];
@@ -586,10 +586,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -622,9 +622,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       let rowsEmitted = 0;
@@ -641,10 +641,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -685,9 +685,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       const responses: QueryResultRow[] = [];
@@ -702,10 +702,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -766,9 +766,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       let rowsEmitted = 0;
@@ -785,10 +785,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -843,9 +843,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       };
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -856,7 +856,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -883,7 +883,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             resultStream._stateMachine.startNextAttempt();
           },
           () => {
-            assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
+            assert.equal(preparedStatement.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
               'BeforeFirstResumeToken',
@@ -940,9 +940,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       };
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -953,7 +953,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -989,7 +989,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             resultStream._stateMachine.startNextAttempt();
           },
           () => {
-            assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
+            assert.equal(preparedStatement.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
               'BeforeFirstResumeToken',
@@ -1050,9 +1050,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       };
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -1064,7 +1064,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1111,7 +1111,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             resultStream._stateMachine.startNextAttempt();
           },
           () => {
-            assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
+            assert.equal(preparedStatement.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
               'BeforeFirstResumeToken',
@@ -1177,9 +1177,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       const expiredError = createExpiredQueryError();
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       const responses: QueryResultRow[] = [];
       resultStream.on('data', (row: any) => {
@@ -1190,7 +1190,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1226,7 +1226,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             resultStream._stateMachine.startNextAttempt();
           },
           () => {
-            assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
+            assert.equal(preparedStatement.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
               'BeforeFirstResumeToken',
@@ -1248,8 +1248,8 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           },
           () => {
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 2);
-            preparedQuery.callbacks[1](
+            assert.equal(preparedStatement.callbacks.length, 2);
+            preparedStatement.callbacks[1](
               undefined,
               'bytes',
               createResultSetMetadata(['f2', pbType({int64Type: {}})]),
@@ -1278,7 +1278,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             // the first message before the retry should have been discarded
             assert.equal(responses[0].get('f2'), 2);
             assert.throws(() => {
-              // we make sure that the column name from the first preparedQuery is not present.
+              // we make sure that the column name from the first preparedStatement is not present.
               responses[0].get('f1');
             });
             done();
@@ -1315,9 +1315,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       const expiredError = createExpiredQueryError();
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       const responses: QueryResultRow[] = [];
@@ -1332,7 +1332,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1368,7 +1368,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             resultStream._stateMachine.startNextAttempt();
           },
           () => {
-            assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
+            assert.equal(preparedStatement.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
               'AfterFirstResumeToken',
@@ -1409,9 +1409,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       };
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       let rowsEmitted = 0;
@@ -1427,7 +1427,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1482,9 +1482,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       };
 
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       const responses: QueryResultRow[] = [];
@@ -1499,7 +1499,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1545,9 +1545,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       let rowsEmitted = 0;
@@ -1585,9 +1585,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       let rowsEmitted = 0;
@@ -1603,16 +1603,18 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](new Error('fetching QP failed!'));
+            preparedStatement.callbacks[0](new Error('fetching QP failed!'));
           },
           () => {
             assert.equal(errorEmitted, false);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 2);
-            preparedQuery.callbacks[1](new Error('fetching QP failed again!'));
+            assert.equal(preparedStatement.callbacks.length, 2);
+            preparedStatement.callbacks[1](
+              new Error('fetching QP failed again!'),
+            );
           },
           () => {
             assert.equal(errorEmitted, false);
@@ -1636,9 +1638,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       let rowsEmitted = 0;
@@ -1655,10 +1657,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1689,9 +1691,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       }) as any;
       bigtableStream.abort = () => {};
       BIGTABLE.request = () => bigtableStream as any;
-      const preparedQuery = new MockPreparedQuery();
+      const preparedStatement = new MockPreparedStatement();
       const resultStream = instance.createExecuteQueryStream({
-        preparedQuery,
+        preparedStatement,
       } as any) as any;
       let errorEmitted = false;
       const responses: QueryResultRow[] = [];
@@ -1707,10 +1709,10 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             clearTimeout(resultStream._stateMachine.timeoutTimer);
             assert.equal(resultStream._stateMachine.state, 'AwaitingQueryPlan');
-            assert.equal(preparedQuery.callbacks.length, 1);
+            assert.equal(preparedStatement.callbacks.length, 1);
           },
           () => {
-            preparedQuery.callbacks[0](
+            preparedStatement.callbacks[0](
               undefined,
               'bytes',
               createResultSetMetadata(['f1', pbType({int64Type: {}})]),
@@ -1746,7 +1748,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
   });
 });
 
-describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
+describe('Bigtable/ExecuteQueryPreparedStatementObject', () => {
   const INSTANCE_ID = 'my-instance';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const BIGTABLE = {
@@ -1770,13 +1772,13 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
 
   describe('happy_path', () => {
     it('getting prepared query plan', done => {
-      const preparedQuery = new PreparedQuery(
+      const preparedStatement = new PreparedStatement(
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
         {a: SqlTypes.Int64()},
       );
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f').type, 'int64');
@@ -1798,9 +1800,14 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
         seconds: someTimestamp / 1000,
         nanos: 0,
       });
-      const preparedQuery = new PreparedQuery(BIGTABLE, resp, {} as any, {
-        a: SqlTypes.Int64(),
-      });
+      const preparedStatement = new PreparedStatement(
+        BIGTABLE,
+        resp,
+        {} as any,
+        {
+          a: SqlTypes.Int64(),
+        },
+      );
       // Set the time to 100 ms after the "should-refresh" point in time
       clock.setSystemTime(someTimestamp - SHOULD_REFRESH_SOON_PERIOD_MS + 100);
       let getDataCalls = 0;
@@ -1812,7 +1819,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
           done();
         }
       };
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f').type, 'int64');
@@ -1824,7 +1831,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
       assert.equal(pqRequestCb !== null, true);
 
       // both getData calls should get the old value before the refresh finishes
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f').type, 'int64');
@@ -1840,12 +1847,17 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
         seconds: someTimestamp / 1000,
         nanos: 0,
       });
-      const preparedQuery = new PreparedQuery(BIGTABLE, resp, {} as any, {
-        a: SqlTypes.Int64(),
-      });
+      const preparedStatement = new PreparedStatement(
+        BIGTABLE,
+        resp,
+        {} as any,
+        {
+          a: SqlTypes.Int64(),
+        },
+      );
       // Set the time to 100 ms after the "validUntil" point in time
       clock.setSystemTime(someTimestamp + 100);
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f').type, 'int64');
@@ -1874,7 +1886,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
         seconds: someTimestamp / 1000,
         nanos: 0,
       });
-      const preparedQuery = new PreparedQuery(
+      const preparedStatement = new PreparedStatement(
         BIGTABLE,
         originalResp,
         {} as any,
@@ -1884,7 +1896,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
       );
       // Set the time to 100 ms after the "should-refresh" point in time
       clock.setSystemTime(someTimestamp - SHOULD_REFRESH_SOON_PERIOD_MS + 100);
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f1').type, 'int64');
@@ -1895,7 +1907,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
       assert.equal(pqRequestCb !== null, true);
 
       // second getData call
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f1').type, 'int64');
@@ -1908,12 +1920,12 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
       // Bigtable returns the prepareQuery response
       pqRequestCb!(null, secondResp);
 
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f2').type, 'int64');
         assert.throws(() => {
-          // we make sure that the column name from the first preparedQuery is not present.
+          // we make sure that the column name from the first preparedStatement is not present.
           metadata?.get('f1');
         });
       }, 1000);
@@ -1925,18 +1937,23 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
   describe('other_cases', () => {
     it('getting data after expiration hangs', done => {
       const resp = createPrepareQueryResponse(['f', pbType({int64Type: {}})]);
-      const preparedQuery = new PreparedQuery(BIGTABLE, resp, {} as any, {
-        a: SqlTypes.Int64(),
-      });
+      const preparedStatement = new PreparedStatement(
+        BIGTABLE,
+        resp,
+        {} as any,
+        {
+          a: SqlTypes.Int64(),
+        },
+      );
       (BIGTABLE as any).request = (req: any, cb: any) => cb(null, resp);
 
-      preparedQuery.markAsExpired();
-      assert.equal(preparedQuery.isExpired(), true);
-      assert.equal((preparedQuery as any).isRefreshing, false);
-      assert.equal((preparedQuery as any).timer, null);
+      preparedStatement.markAsExpired();
+      assert.equal(preparedStatement.isExpired(), true);
+      assert.equal((preparedStatement as any).isRefreshing, false);
+      assert.equal((preparedStatement as any).timer, null);
 
       let callbackCalled = false;
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         callbackCalled = true;
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
@@ -1944,38 +1961,43 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
       }, 1000);
 
       // getData scheduled getting the query plan immediately after
-      assert.equal((preparedQuery as any).timer !== null, true);
+      assert.equal((preparedStatement as any).timer !== null, true);
       assert.equal(callbackCalled, false);
       clock.tick(1);
-      assert.equal((preparedQuery as any).timer, null);
+      assert.equal((preparedStatement as any).timer, null);
       assert.equal(callbackCalled, true);
       done();
     });
 
     it('plan expired during getData callback', done => {
       const resp = createPrepareQueryResponse(['f', pbType({int64Type: {}})]);
-      const preparedQuery = new PreparedQuery(BIGTABLE, resp, {} as any, {
-        a: SqlTypes.Int64(),
-      });
+      const preparedStatement = new PreparedStatement(
+        BIGTABLE,
+        resp,
+        {} as any,
+        {
+          a: SqlTypes.Int64(),
+        },
+      );
       (BIGTABLE as any).request = (req: any, cb: any) => cb(null, resp);
 
-      preparedQuery.markAsExpired();
-      assert.equal(preparedQuery.isExpired(), true);
-      assert.equal((preparedQuery as any).isRefreshing, false);
-      assert.equal((preparedQuery as any).timer, null);
+      preparedStatement.markAsExpired();
+      assert.equal(preparedStatement.isExpired(), true);
+      assert.equal((preparedStatement as any).isRefreshing, false);
+      assert.equal((preparedStatement as any).timer, null);
 
       let callbackCalled = false;
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         callbackCalled = true;
         assert.equal(err, undefined);
         assert.equal(pqBytes, 'xd');
         assert.equal(metadata?.get('f').type, 'int64');
-        preparedQuery.markAsExpired();
+        preparedStatement.markAsExpired();
       }, 1000);
 
       // this callback gets served second. It will get an error
       // because the query got expired between the last refresh and serving of this callback
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         assert.equal(callbackCalled, true);
         assert.equal(pqBytes, undefined);
         assert.equal(metadata, undefined);
@@ -1983,29 +2005,34 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
       }, 1000);
 
       // getData scheduled getting the query plan immediately after
-      assert.equal((preparedQuery as any).timer !== null, true);
+      assert.equal((preparedStatement as any).timer !== null, true);
       assert.equal(callbackCalled, false);
       clock.tick(1);
-      assert.equal((preparedQuery as any).timer, null);
+      assert.equal((preparedStatement as any).timer, null);
       assert.equal(callbackCalled, true);
       done();
     });
 
     it('plan refresh failed', done => {
       const resp = createPrepareQueryResponse(['f', pbType({int64Type: {}})]);
-      const preparedQuery = new PreparedQuery(BIGTABLE, resp, {} as any, {
-        a: SqlTypes.Int64(),
-      });
+      const preparedStatement = new PreparedStatement(
+        BIGTABLE,
+        resp,
+        {} as any,
+        {
+          a: SqlTypes.Int64(),
+        },
+      );
       (BIGTABLE as any).request = (req: any, cb: any) =>
         cb(new Error('Problem'));
 
-      preparedQuery.markAsExpired();
-      assert.equal(preparedQuery.isExpired(), true);
-      assert.equal((preparedQuery as any).isRefreshing, false);
-      assert.equal((preparedQuery as any).timer, null);
+      preparedStatement.markAsExpired();
+      assert.equal(preparedStatement.isExpired(), true);
+      assert.equal((preparedStatement as any).isRefreshing, false);
+      assert.equal((preparedStatement as any).timer, null);
 
       let callbackCalled = false;
-      preparedQuery.getData((err, pqBytes, metadata) => {
+      preparedStatement.getData((err, pqBytes, metadata) => {
         callbackCalled = true;
         assert.equal(pqBytes, undefined);
         assert.equal(metadata, undefined);
@@ -2014,7 +2041,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
 
       assert.equal(callbackCalled, false);
       clock.tick(1);
-      assert.equal((preparedQuery as any).timer, null);
+      assert.equal((preparedStatement as any).timer, null);
       assert.equal(callbackCalled, true);
       done();
     });
