@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Readable} from 'stream';
+import {Duplex, Readable} from 'stream';
 import * as SqlTypes from './types';
 import {PreciseDate} from '@google-cloud/precise-date';
-import {CallOptions} from 'google-gax';
 import {NamedList} from './namedlist';
+const CRC32C = require('fast-crc32c');
 
 export type BigtableMap = EncodedKeyMap;
 
@@ -71,9 +71,16 @@ export class Struct extends NamedList<SqlValue> {
   }
 }
 
-export interface ExecuteQueryStreamReadableWithMetadata extends Readable {
+export interface ExecuteQueryStreamWithMetadata extends Duplex {
   getMetadata: () => SqlTypes.ResultSetMetadata | null;
-  end: () => void;
+  end: () => this;
+}
+
+export function checksumValid(
+  buffer: Buffer,
+  expectedChecksum: number
+): boolean {
+  return CRC32C.calculate(buffer) === expectedChecksum;
 }
 
 export function ensureUint8Array(

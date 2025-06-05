@@ -1,5 +1,6 @@
 import {Readable} from 'stream';
 import {google} from '../../protos/protos';
+import {PreparedQuery} from '../../src/execute-query/preparedquery';
 
 export const createMetadata = (
   ...values: [string | null, google.bigtable.v2.Type][]
@@ -18,6 +19,34 @@ export const createMetadata = (
   });
 };
 
+export const createPreparedQuery = (
+  ...values: [string | null, google.bigtable.v2.Type][]
+): PreparedQuery => {
+  const metadataPB = createMetadata(...values).metadata!;
+  const prepareQueryResponse = google.bigtable.v2.PrepareQueryResponse.create({
+    metadata: metadataPB,
+    preparedQuery: 'xd',
+    validUntil: null,
+  });
+  return new PreparedQuery(
+    undefined as any,
+    prepareQueryResponse,
+    {} as any,
+    {}
+  );
+};
+
+export const createPrepareQueryResponse = (
+  ...values: [string | null, google.bigtable.v2.Type][]
+): google.bigtable.v2.PrepareQueryResponse => {
+  const metadataPB = createMetadata(...values).metadata!;
+  return google.bigtable.v2.PrepareQueryResponse.create({
+    metadata: metadataPB,
+    preparedQuery: 'xd',
+    validUntil: null,
+  });
+};
+
 export const pbType = (
   value: google.bigtable.v2.IType
 ): google.bigtable.v2.Type => {
@@ -26,6 +55,8 @@ export const pbType = (
 
 export const createProtoRows = (
   resumeToken?: string,
+  batchChecksum?: number,
+  reset?: boolean,
   ...values: google.bigtable.v2.IValue[]
 ): google.bigtable.v2.ExecuteQueryResponse => {
   const bytes = google.bigtable.v2.ProtoRows.encode(
@@ -37,8 +68,10 @@ export const createProtoRows = (
   return {
     response: 'results',
     results: {
-      protoRowsBatch: {batchData: bytes},
+      protoRowsBatch: values.length > 0 ? {batchData: bytes} : undefined,
       resumeToken: resumeToken ? Buffer.from(resumeToken) : undefined,
+      batchChecksum: batchChecksum,
+      reset: reset || false,
     },
   } as google.bigtable.v2.ExecuteQueryResponse;
 };

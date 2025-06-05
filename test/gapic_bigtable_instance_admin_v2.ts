@@ -161,6 +161,12 @@ function stubAsyncIterationCall<ResponseType>(
 
 describe('v2.BigtableInstanceAdminClient', () => {
   describe('Common methods', () => {
+    it('has servicePath', () => {
+      const servicePath =
+        bigtableinstanceadminModule.v2.BigtableInstanceAdminClient.servicePath;
+      assert(servicePath);
+    });
+
     it('has apiEndpoint', () => {
       const client =
         new bigtableinstanceadminModule.v2.BigtableInstanceAdminClient();
@@ -391,14 +397,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.getInstance = stubSimpleCall(expectedResponse);
       const [response] = await client.getInstance(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getInstance without error using callback', async () => {
@@ -439,14 +442,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes getInstance with error', async () => {
@@ -471,14 +471,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.getInstance(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.getInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getInstance with closed client', async () => {
@@ -527,14 +524,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.listInstances = stubSimpleCall(expectedResponse);
       const [response] = await client.listInstances(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listInstances as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listInstances as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listInstances as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listInstances without error using callback', async () => {
@@ -575,14 +569,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listInstances as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listInstances as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listInstances as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes listInstances with error', async () => {
@@ -607,14 +598,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.listInstances(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.listInstances as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listInstances as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listInstances as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listInstances with closed client', async () => {
@@ -663,14 +651,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.updateInstance = stubSimpleCall(expectedResponse);
       const [response] = await client.updateInstance(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.updateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes updateInstance without error using callback', async () => {
@@ -711,14 +696,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.updateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes updateInstance with error', async () => {
@@ -743,14 +725,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.updateInstance(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.updateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes updateInstance with closed client', async () => {
@@ -799,14 +778,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.deleteInstance = stubSimpleCall(expectedResponse);
       const [response] = await client.deleteInstance(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.deleteInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes deleteInstance without error using callback', async () => {
@@ -847,14 +823,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.deleteInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes deleteInstance with error', async () => {
@@ -879,14 +852,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.deleteInstance(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.deleteInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes deleteInstance with closed client', async () => {
@@ -935,14 +905,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.getCluster = stubSimpleCall(expectedResponse);
       const [response] = await client.getCluster(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getCluster without error using callback', async () => {
@@ -983,14 +950,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes getCluster with error', async () => {
@@ -1015,14 +979,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.getCluster(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.getCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getCluster with closed client', async () => {
@@ -1071,14 +1032,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.listClusters = stubSimpleCall(expectedResponse);
       const [response] = await client.listClusters(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listClusters as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listClusters as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listClusters as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listClusters without error using callback', async () => {
@@ -1119,14 +1077,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listClusters as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listClusters as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listClusters as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes listClusters with error', async () => {
@@ -1151,14 +1106,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.listClusters(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.listClusters as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listClusters as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listClusters as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listClusters with closed client', async () => {
@@ -1207,14 +1159,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.deleteCluster = stubSimpleCall(expectedResponse);
       const [response] = await client.deleteCluster(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.deleteCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes deleteCluster without error using callback', async () => {
@@ -1255,14 +1204,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.deleteCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes deleteCluster with error', async () => {
@@ -1287,14 +1233,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.deleteCluster(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.deleteCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes deleteCluster with closed client', async () => {
@@ -1343,14 +1286,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.createAppProfile = stubSimpleCall(expectedResponse);
       const [response] = await client.createAppProfile(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.createAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes createAppProfile without error using callback', async () => {
@@ -1391,14 +1331,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.createAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes createAppProfile with error', async () => {
@@ -1423,14 +1360,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.createAppProfile(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.createAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes createAppProfile with closed client', async () => {
@@ -1479,14 +1413,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.getAppProfile = stubSimpleCall(expectedResponse);
       const [response] = await client.getAppProfile(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getAppProfile without error using callback', async () => {
@@ -1527,14 +1458,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes getAppProfile with error', async () => {
@@ -1559,14 +1487,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.getAppProfile(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.getAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getAppProfile with closed client', async () => {
@@ -1615,14 +1540,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.deleteAppProfile = stubSimpleCall(expectedResponse);
       const [response] = await client.deleteAppProfile(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.deleteAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes deleteAppProfile without error using callback', async () => {
@@ -1663,14 +1585,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.deleteAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes deleteAppProfile with error', async () => {
@@ -1695,14 +1614,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.deleteAppProfile(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.deleteAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.deleteAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.deleteAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes deleteAppProfile with closed client', async () => {
@@ -1751,14 +1667,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.getIamPolicy = stubSimpleCall(expectedResponse);
       const [response] = await client.getIamPolicy(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getIamPolicy as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getIamPolicy as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getIamPolicy as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getIamPolicy without error using callback', async () => {
@@ -1799,14 +1712,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.getIamPolicy as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getIamPolicy as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getIamPolicy as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes getIamPolicy with error', async () => {
@@ -1831,14 +1741,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.getIamPolicy(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.getIamPolicy as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.getIamPolicy as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.getIamPolicy as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes getIamPolicy with closed client', async () => {
@@ -1887,14 +1794,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.setIamPolicy = stubSimpleCall(expectedResponse);
       const [response] = await client.setIamPolicy(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.setIamPolicy as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.setIamPolicy as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.setIamPolicy as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes setIamPolicy without error using callback', async () => {
@@ -1935,14 +1839,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.setIamPolicy as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.setIamPolicy as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.setIamPolicy as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes setIamPolicy with error', async () => {
@@ -1967,14 +1868,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.setIamPolicy(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.setIamPolicy as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.setIamPolicy as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.setIamPolicy as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes setIamPolicy with closed client', async () => {
@@ -2024,14 +1922,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         stubSimpleCall(expectedResponse);
       const [response] = await client.testIamPermissions(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.testIamPermissions as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.testIamPermissions as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.testIamPermissions as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes testIamPermissions without error using callback', async () => {
@@ -2072,14 +1967,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.testIamPermissions as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.testIamPermissions as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.testIamPermissions as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes testIamPermissions with error', async () => {
@@ -2104,14 +1996,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.testIamPermissions(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.testIamPermissions as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.testIamPermissions as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.testIamPermissions as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes testIamPermissions with closed client', async () => {
@@ -2714,14 +2603,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       const [operation] = await client.createInstance(request);
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes createInstance without error using callback', async () => {
@@ -2769,14 +2655,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       >;
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes createInstance with call error', async () => {
@@ -2801,14 +2684,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.createInstance(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes createInstance with LRO error', async () => {
@@ -2835,14 +2715,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       );
       const [operation] = await client.createInstance(request);
       await assert.rejects(operation.promise(), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes checkCreateInstanceProgress without error', async () => {
@@ -2915,14 +2792,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       const [operation] = await client.partialUpdateInstance(request);
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes partialUpdateInstance without error using callback', async () => {
@@ -2971,14 +2845,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       >;
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes partialUpdateInstance with call error', async () => {
@@ -3007,14 +2878,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         client.partialUpdateInstance(request),
         expectedError,
       );
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes partialUpdateInstance with LRO error', async () => {
@@ -3042,14 +2910,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       );
       const [operation] = await client.partialUpdateInstance(request);
       await assert.rejects(operation.promise(), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateInstance as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateInstance as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes checkPartialUpdateInstanceProgress without error', async () => {
@@ -3121,14 +2986,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       const [operation] = await client.createCluster(request);
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes createCluster without error using callback', async () => {
@@ -3176,14 +3038,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       >;
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes createCluster with call error', async () => {
@@ -3208,14 +3067,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.createCluster(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes createCluster with LRO error', async () => {
@@ -3242,14 +3098,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       );
       const [operation] = await client.createCluster(request);
       await assert.rejects(operation.promise(), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.createCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.createCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes checkCreateClusterProgress without error', async () => {
@@ -3321,14 +3174,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       const [operation] = await client.updateCluster(request);
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes updateCluster without error using callback', async () => {
@@ -3376,14 +3226,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       >;
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes updateCluster with call error', async () => {
@@ -3408,14 +3255,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.updateCluster(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes updateCluster with LRO error', async () => {
@@ -3442,14 +3286,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       );
       const [operation] = await client.updateCluster(request);
       await assert.rejects(operation.promise(), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes checkUpdateClusterProgress without error', async () => {
@@ -3522,14 +3363,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       const [operation] = await client.partialUpdateCluster(request);
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes partialUpdateCluster without error using callback', async () => {
@@ -3578,14 +3416,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       >;
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes partialUpdateCluster with call error', async () => {
@@ -3611,14 +3446,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.partialUpdateCluster(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes partialUpdateCluster with LRO error', async () => {
@@ -3646,14 +3478,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       );
       const [operation] = await client.partialUpdateCluster(request);
       await assert.rejects(operation.promise(), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.partialUpdateCluster as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.partialUpdateCluster as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes checkPartialUpdateClusterProgress without error', async () => {
@@ -3726,14 +3555,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       const [operation] = await client.updateAppProfile(request);
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes updateAppProfile without error using callback', async () => {
@@ -3782,14 +3608,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       >;
       const [response] = await operation.promise();
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes updateAppProfile with call error', async () => {
@@ -3815,14 +3638,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.updateAppProfile(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes updateAppProfile with LRO error', async () => {
@@ -3850,14 +3670,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       );
       const [operation] = await client.updateAppProfile(request);
       await assert.rejects(operation.promise(), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.updateAppProfile as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.updateAppProfile as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes checkUpdateAppProfileProgress without error', async () => {
@@ -4743,14 +4560,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.listAppProfiles = stubSimpleCall(expectedResponse);
       const [response] = await client.listAppProfiles(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listAppProfiles as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listAppProfiles as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listAppProfiles as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listAppProfiles without error using callback', async () => {
@@ -4793,14 +4607,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listAppProfiles as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listAppProfiles as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listAppProfiles as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes listAppProfiles with error', async () => {
@@ -4825,14 +4636,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.listAppProfiles(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.listAppProfiles as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listAppProfiles as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listAppProfiles as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listAppProfilesStream without error', async () => {
@@ -5051,14 +4859,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       client.innerApiCalls.listHotTablets = stubSimpleCall(expectedResponse);
       const [response] = await client.listHotTablets(request);
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listHotTablets as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listHotTablets as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listHotTablets as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listHotTablets without error using callback', async () => {
@@ -5101,14 +4906,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
       });
       const response = await promise;
       assert.deepStrictEqual(response, expectedResponse);
-      const actualRequest = (
-        client.innerApiCalls.listHotTablets as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listHotTablets as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listHotTablets as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions /*, callback defined above */)
+      );
     });
 
     it('invokes listHotTablets with error', async () => {
@@ -5133,14 +4935,11 @@ describe('v2.BigtableInstanceAdminClient', () => {
         expectedError,
       );
       await assert.rejects(client.listHotTablets(request), expectedError);
-      const actualRequest = (
-        client.innerApiCalls.listHotTablets as SinonStub
-      ).getCall(0).args[0];
-      assert.deepStrictEqual(actualRequest, request);
-      const actualHeaderRequestParams = (
-        client.innerApiCalls.listHotTablets as SinonStub
-      ).getCall(0).args[1].otherArgs.headers['x-goog-request-params'];
-      assert(actualHeaderRequestParams.includes(expectedHeaderRequestParams));
+      assert(
+        (client.innerApiCalls.listHotTablets as SinonStub)
+          .getCall(0)
+          .calledWith(request, expectedOptions, undefined)
+      );
     });
 
     it('invokes listHotTabletsStream without error', async () => {

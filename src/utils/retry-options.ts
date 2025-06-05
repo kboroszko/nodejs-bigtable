@@ -48,3 +48,26 @@ export const isRstStreamError = (
   }
   return false;
 };
+
+/**
+ * Checks if the error is an "expired query plan" error.
+ * For more info refer to the ExecuteQueryStateMachine
+ * @param error
+ */
+export const isExpiredQueryError = (
+  error: GoogleError | ServiceError
+): boolean => {
+  if (error.code === grpc.status.FAILED_PRECONDITION && error.message) {
+    const error_message = (error.message || '').toLowerCase();
+    return error_message.includes('the prepared query has expired');
+  }
+  return false;
+};
+
+/**
+ * Checks if the error is a cancel error - caused by aborting the stream.
+ * @param error
+ */
+export function isCancelError(error: ServiceError) {
+  return error.code === grpc.status.CANCELLED.valueOf();
+}

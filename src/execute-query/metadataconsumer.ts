@@ -3,9 +3,7 @@ import * as Types from './types';
 import {google} from '../../protos/protos';
 
 /**
- * This class keeps and parses the metadata. It ensures that new metadata
- * is only consumed once. If you try to consume metadata for the second time
- * it will fail unless it was reset in the meantime.
+ * This class keeps and parses the metadata.
  */
 export class MetadataConsumer {
   private metadata: Types.ResultSetMetadata | null;
@@ -18,15 +16,8 @@ export class MetadataConsumer {
     return this.metadata;
   };
 
-  consume = (new_metadata: google.bigtable.v2.IResultSetMetadata) => {
-    if (this.metadata !== null) {
-      throw Error('Trying to set metadata twice!');
-    }
-    this.metadata = MetadataConsumer.parseMetadata(new_metadata);
-  };
-
-  reset = () => {
-    this.metadata = null;
+  consume = (new_metadata: Types.ResultSetMetadata) => {
+    this.metadata = new_metadata;
   };
 
   static parsePBType(type: google.bigtable.v2.Type): Types.Type {

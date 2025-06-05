@@ -17,40 +17,26 @@
           "rpc_timeout_multiplier": 1,
           "max_rpc_timeout_millis": 60000,
           "total_timeout_millis": 600000
-        },
-        "5af39a0f6db447f61c4f695240caeccb74f78362": {
-          "initial_retry_delay_millis": 10,
-          "retry_delay_multiplier": 2,
-          "max_retry_delay_millis": 60000,
-          "initial_rpc_timeout_millis": 60000,
-          "rpc_timeout_multiplier": 1,
-          "max_rpc_timeout_millis": 60000,
-          "total_timeout_millis": 600000
         }
       },
       "methods": {
         "ReadRows": {
-          "timeout_millis": 43200000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "SampleRowKeys": {
-          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "MutateRow": {
-          "timeout_millis": 60000,
-          "retry_codes_name": "idempotent",
-          "retry_params_name": "5af39a0f6db447f61c4f695240caeccb74f78362"
+          "retry_codes_name": "non_idempotent",
+          "retry_params_name": "default"
         },
         "MutateRows": {
-          "timeout_millis": 600000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "CheckAndMutateRow": {
-          "timeout_millis": 20000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
@@ -59,17 +45,18 @@
           "retry_params_name": "default"
         },
         "ReadModifyWriteRow": {
-          "timeout_millis": 20000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "GenerateInitialChangeStreamPartitions": {
-          "timeout_millis": 60000,
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },
         "ReadChangeStream": {
-          "timeout_millis": 43200000,
+          "retry_codes_name": "non_idempotent",
+          "retry_params_name": "default"
+        },
+        "PrepareQuery": {
           "retry_codes_name": "non_idempotent",
           "retry_params_name": "default"
         },

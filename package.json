@@ -63,6 +63,7 @@
     "dot-prop": "6.0.0",
     "escape-string-regexp": "4.0.0",
     "extend": "^3.0.2",
+    "fast-crc32c": "^2.0.0",
     "google-gax": "^5.0.1-rc.0",
     "grpc-gcp": "^1.0.1",
     "is": "^3.3.0",

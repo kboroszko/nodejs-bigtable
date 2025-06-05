@@ -4508,7 +4508,7 @@
                 "csharp_namespace": "Google.Cloud.Bigtable.V2",
                 "go_package": "cloud.google.com/go/bigtable/apiv2/bigtablepb;bigtablepb",
                 "java_multiple_files": true,
-                "java_outer_classname": "ResponseParamsProto",
+                "java_outer_classname": "RequestStatsProto",
                 "java_package": "com.google.bigtable.v2",
                 "php_namespace": "Google\\Cloud\\Bigtable\\V2",
                 "ruby_package": "Google::Cloud::Bigtable::V2",
@@ -4942,7 +4942,7 @@
                         "(google.api.http).body": "*",
                         "(google.api.routing).routing_parameters.field": "app_profile_id",
                         "(google.api.routing).routing_parameters.path_template": "{name=projects/*/instances/*}",
-                        "(google.api.method_signature)": "instance_name,query,app_profile_id"
+                        "(google.api.method_signature)": "instance_name,prepared_query,app_profile_id"
                       },
                       "parsedOptions": [
                         {
@@ -4965,10 +4965,10 @@
                           }
                         },
                         {
-                          "(google.api.method_signature)": "instance_name,query"
+                          "(google.api.method_signature)": "instance_name,prepared_query"
                         },
                         {
-                          "(google.api.method_signature)": "instance_name,query,app_profile_id"
+                          "(google.api.method_signature)": "instance_name,prepared_query,app_profile_id"
                         }
                       ]
                     }
@@ -5613,6 +5613,54 @@
                     }
                   }
                 },
+                "PrepareQueryRequest": {
+                  "oneofs": {
+                    "dataFormat": {
+                      "oneof": [
+                        "protoFormat"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "instanceName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "appProfileId": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "query": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "protoFormat": {
+                      "type": "ProtoFormat",
+                      "id": 4
+                    },
+                    "paramTypes": {
+                      "keyType": "string",
+                      "type": "Type",
+                      "id": 6
+                    }
+                  }
+                },
+                "PrepareQueryResponse": {
+                  "fields": {
+                    "metadata": {
+                      "type": "ResultSetMetadata",
+                      "id": 1
+                    },
+                    "preparedQuery": {
+                      "type": "bytes",
+                      "id": 2
+                    },
+                    "validUntil": {
+                      "type": "google.protobuf.Timestamp",
+                      "id": 3
+                    }
+                  }
+                },
                 "ExecuteQueryRequest": {
                   "oneofs": {
                     "dataFormat": {
@@ -5624,18 +5672,11 @@
                   "fields": {
                     "instanceName": {
                       "type": "string",
-                      "id": 1,
-                      "options": {
-                        "(google.api.field_behavior)": "REQUIRED",
-                        "(google.api.resource_reference).type": "bigtableadmin.googleapis.com/Instance"
-                      }
+                      "id": 1
                     },
                     "appProfileId": {
                       "type": "string",
-                      "id": 2,
-                      "options": {
-                        "(google.api.field_behavior)": "OPTIONAL"
-                      }
+                      "id": 2
                     },
                     "query": {
                       "type": "string",
@@ -5656,20 +5697,18 @@
                         "deprecated": true
                       }
                     },
+                    "validateOnly": {
+                      "type": "bool",
+                      "id": 6
+                    },
                     "resumeToken": {
                       "type": "bytes",
-                      "id": 8,
-                      "options": {
-                        "(google.api.field_behavior)": "OPTIONAL"
-                      }
+                      "id": 8
                     },
                     "params": {
                       "keyType": "string",
                       "type": "Value",
-                      "id": 7,
-                      "options": {
-                        "(google.api.field_behavior)": "REQUIRED"
-                      }
+                      "id": 7
                     }
                   }
                 },

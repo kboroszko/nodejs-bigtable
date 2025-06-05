@@ -15,9 +15,7 @@
 import {Transform, TransformCallback} from 'stream';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import {google} from '../../protos/protos';
-
-import {MetadataConsumer} from './metadataconsumer';
-import {ensureUint8Array} from './values';
+import * as SqlValues from './values';
 
 /**
  * stream.Transform which buffers bytes from `ExecuteQuery` responses until
@@ -25,76 +23,123 @@ import {ensureUint8Array} from './values';
  * forward.
  */
 export class ByteBufferTransformer extends Transform {
-  messageBuffer: Uint8Array[] = [];
-  metadataConsumer: MetadataConsumer;
-  protoBytesEncoding?: BufferEncoding;
+  private messageQueue: Buffer[] = [];
+  private messageBuffer: Uint8Array[] = [];
+  private protoBytesEncoding?: BufferEncoding;
 
-  constructor(
-    metadataConsumer: MetadataConsumer,
-    protoBytesEncoding?: BufferEncoding
-  ) {
+  constructor(protoBytesEncoding?: BufferEncoding) {
     super({objectMode: true, highWaterMark: 0});
-    this.metadataConsumer = metadataConsumer;
     this.protoBytesEncoding = protoBytesEncoding;
   }
+
+  private resetQueueAndBuffer = (
+    estimatedBatchSize: number | null | undefined
+  ): void => {
+    this.messageQueue = [];
+    this.messageBuffer = new Array(estimatedBatchSize || 0);
+  };
+
+  private flushMessageBuffer = (
+    batchChecksum: number,
+    estimatedBatchSize: number | null | undefined
+  ): void => {
+    if (this.messageBuffer.length === 0) {
+      throw new Error('Recieved empty batch with non-zero checksum.');
+    }
+    const newBatch = Buffer.concat(this.messageBuffer);
+    if (!SqlValues.checksumValid(newBatch, batchChecksum)) {
+      throw new Error('Failed to validate next batch of results');
+    }
+    this.messageQueue.push(newBatch);
+    this.messageBuffer = new Array(estimatedBatchSize || 0);
+  };
+
+  private pushMessages = (resumeToken: string | Uint8Array): void => {
+    const token = SqlValues.ensureUint8Array(
+      resumeToken,
+      this.protoBytesEncoding
+    );
+    if (this.messageBuffer.length !== 0) {
+      throw new Error('Recieved incomplete batch of rows.');
+    }
+    this.push([this.messageQueue, token]);
+    this.messageBuffer = [];
+    this.messageQueue = [];
+  };
+
+  /**
+   * Process a `PartialResultSet` message from the server.
+   * For more info refer to the PartialResultSet protobuf definition.
+   * @param partialResultSet The `PartialResultSet` message to process.
+   */
+  private processProtoRowsBatch = (
+    partialResultSet: google.bigtable.v2.IPartialResultSet
+  ): void => {
+    let handled = false;
+    if (partialResultSet.reset) {
+      this.resetQueueAndBuffer(partialResultSet.estimatedBatchSize);
+      handled = true;
+    }
+
+    if (partialResultSet.protoRowsBatch?.batchData?.length) {
+      this.messageBuffer.push(
+        SqlValues.ensureUint8Array(
+          partialResultSet.protoRowsBatch.batchData,
+          this.protoBytesEncoding
+        )
+      );
+      handled = true;
+    }
+
+    if (partialResultSet.batchChecksum) {
+      this.flushMessageBuffer(
+        partialResultSet.batchChecksum,
+        partialResultSet.estimatedBatchSize
+      );
+      handled = true;
+    }
+
+    if (partialResultSet.resumeToken) {
+      this.pushMessages(partialResultSet.resumeToken);
+      handled = true;
+    }
+
+    if (!handled) {
+      throw new Error('Response did not contain any results!');
+    }
+  };
 
   _transform(
     chunk: google.bigtable.v2.ExecuteQueryResponse,
     _encoding: BufferEncoding,
     callback: TransformCallback
   ) {
-    let error: Error | null = null;
+    let maybeError: Error | null = null;
     const reponse = chunk as google.bigtable.v2.ExecuteQueryResponse;
-    switch (reponse.response) {
-      case 'metadata':
-        try {
-          this.metadataConsumer.consume(reponse.metadata!);
-        } catch (e) {
-          error = e as Error;
+    try {
+      switch (reponse.response) {
+        case 'results': {
+          this.processProtoRowsBatch(reponse.results!);
+          break;
         }
-        break;
-
-      case 'results': {
-        let handled = false;
-        if (reponse.results?.protoRowsBatch?.batchData?.length) {
-          this.messageBuffer.push(
-            ensureUint8Array(
-              reponse.results.protoRowsBatch.batchData,
-              this.protoBytesEncoding
-            )
-          );
-          handled = true;
-        }
-        if (reponse.results!.resumeToken) {
-          const resumeToken = ensureUint8Array(
-            reponse.results!.resumeToken,
-            this.protoBytesEncoding
-          );
-          this.push([this.messageBuffer, resumeToken]);
-          this.messageBuffer = [];
-          handled = true;
-        }
-        if (!handled) {
-          error = Error(
-            'Internal Error. Response did not contain any results!'
-          );
-        }
-        break;
+        default:
+          throw Error(`Response contains unknown type ${reponse.response}`);
       }
-      default:
-        error = Error(
-          `Internal Error. Response contains unknown type ${reponse.response}`
-        );
+    } catch (error) {
+      maybeError = new Error(
+        `Internal Error. Failed to process response: ${error}`
+      );
     }
-    callback(error);
+    callback(maybeError);
   }
 
   _flush(callback: TransformCallback): void {
     if (this.messageBuffer.length > 0) {
-      return callback(
+      callback(
         new Error('Internal Error. Last message did not contain a resumeToken.')
       );
+      return;
     }
-    callback();
+    callback(null);
   }
 }

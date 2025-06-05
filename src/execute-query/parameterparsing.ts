@@ -22,28 +22,47 @@ import Long = require('long');
 /**
  * Creates protobuf objects with explicit types from passed parameters.
  * The protobuf Value objects have a field describing their type explicitly.
- * For each param we create a Value object based on either the type provided by
- * the caller as a parameter or by inferring it from the JS type if possible.
+ * For each param we create a Value object based on the provided type.
  * @param parameters map from parameter name to parameter value
  * @param parameter_types map from parameter name to parameter type
  * @returns map from parameter name to a Value object
  */
 export function parseParameters(
   parameters: {[param: string]: ExecuteQueryParameterValue},
-  parameter_types: {[param: string]: SqlTypes.Type}
+  parameterTypes: {[param: string]: SqlTypes.Type}
 ): {[param: string]: google.bigtable.v2.IValue} {
+  // Assert both objects contain the same keys:
+  const parameterKeys = Object.keys(parameters);
+  const parameterTypeKeys = Object.keys(parameterTypes);
+  if (parameterKeys.length !== parameterTypeKeys.length) {
+    throw new Error(
+      `Number of parameters (${parameterKeys.length}) does not match number of parameter types (${parameterTypeKeys.length}).`
+    );
+  }
+  // if the numbers of keys match, but keys differ we will catch it in the next step
   const entries: [string, google.bigtable.v2.IValue][] = [];
   for (const [key, value] of Object.entries(parameters)) {
     let type: SqlTypes.Type;
-    if (Object.prototype.hasOwnProperty.call(parameter_types, key)) {
-      type = parameter_types[key];
+    if (Object.prototype.hasOwnProperty.call(parameterTypes, key)) {
+      type = parameterTypes[key];
     } else {
-      type = inferType(value);
+      throw new Error(`Unrecognized parameter: ${key}`);
     }
 
     entries.push([key, setTypeField(convertJsValueToValue(value, type), type)]);
   }
   return Object.fromEntries(entries);
+}
+
+export function parseParameterTypes(parameter_types: {
+  [param: string]: SqlTypes.Type;
+}): {[param: string]: google.bigtable.v2.IType} {
+  return Object.fromEntries(
+    Object.entries(parameter_types).map(([key, value]) => [
+      key,
+      executeQueryTypeToPBType(value),
+    ])
+  );
 }
 
 function inferType(value: ExecuteQueryParameterValue): SqlTypes.Type {

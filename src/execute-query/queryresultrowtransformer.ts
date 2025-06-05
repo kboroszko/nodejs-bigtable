@@ -19,7 +19,7 @@ import Long = require('long');
 import {
   EncodedKeyMap,
   BigtableDate,
-  ExecuteQueryStreamReadableWithMetadata,
+  ExecuteQueryStreamWithMetadata,
   SqlValue,
   QueryResultRow,
   Struct,
@@ -38,7 +38,7 @@ import {FieldMapping} from './namedlist';
  */
 export class ExecuteQueryStreamTransformWithMetadata
   extends Transform
-  implements ExecuteQueryStreamReadableWithMetadata
+  implements ExecuteQueryStreamWithMetadata
 {
   metadataConsumer: MetadataConsumer;
   fieldMapping: FieldMapping | null;
