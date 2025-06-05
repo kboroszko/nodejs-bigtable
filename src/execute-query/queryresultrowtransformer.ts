@@ -49,7 +49,7 @@ export class ExecuteQueryStreamTransformWithMetadata
     metadataConsumer: MetadataConsumer,
     hasCallerCancelled: () => boolean,
     protoBytesEncoding?: BufferEncoding,
-    opts?: TransformOptions
+    opts?: TransformOptions,
   ) {
     super({...opts, objectMode: true, highWaterMark: 0});
     this.fieldMapping = null;
@@ -101,7 +101,7 @@ export class ExecuteQueryStreamTransformWithMetadata
           return new BigtableDate(
             value.dateValue!.year || 0,
             value.dateValue!.month || 0,
-            value.dateValue!.day || 0
+            value.dateValue!.day || 0,
           );
         }
         break;
@@ -132,8 +132,8 @@ export class ExecuteQueryStreamTransformWithMetadata
     return value.arrayValue.values.map(value =>
       this.valueToJsType(
         value as google.bigtable.v2.Value,
-        metadata.elementType
-      )
+        metadata.elementType,
+      ),
     );
   }
 
@@ -151,10 +151,10 @@ export class ExecuteQueryStreamTransformWithMetadata
       value.arrayValue.values.map((value, index) =>
         this.valueToJsType(
           value as google.bigtable.v2.Value,
-          metadata.get(index)
-        )
+          metadata.get(index),
+        ),
       ),
-      metadata.fieldMapping
+      metadata.fieldMapping,
     );
   }
 
@@ -174,7 +174,7 @@ export class ExecuteQueryStreamTransformWithMetadata
       metadata.keyType.type !== 'bytes'
     ) {
       throw new Error(
-        `Internal error - unsupported type of key received: ${metadata.keyType.type}`
+        `Internal error - unsupported type of key received: ${metadata.keyType.type}`,
       );
     }
     const values: google.bigtable.v2.Value[] = value.arrayValue
@@ -192,7 +192,7 @@ export class ExecuteQueryStreamTransformWithMetadata
           throw new Error('Internal error - received Map with key == null.');
         }
         return [keyValue, this.valueToJsType(pair[1], metadata.valueType)];
-      })
+      }),
     );
   }
 
@@ -210,7 +210,7 @@ export class ExecuteQueryStreamTransformWithMetadata
   _transform(
     chunk: Array<google.bigtable.v2.Value>,
     _encoding: BufferEncoding,
-    callback: TransformCallback
+    callback: TransformCallback,
   ) {
     let error: Error | null = null;
     try {
@@ -220,14 +220,14 @@ export class ExecuteQueryStreamTransformWithMetadata
           this.push(
             new QueryResultRow(
               chunk.map((value, index) =>
-                this.valueToJsType(value, maybeMetadata.get(index))
+                this.valueToJsType(value, maybeMetadata.get(index)),
               ),
-              this.getFieldMapping()
-            )
+              this.getFieldMapping(),
+            ),
           );
         } else {
           throw new Error(
-            'Server error - expected to receive metadata by now.'
+            'Server error - expected to receive metadata by now.',
           );
         }
       }

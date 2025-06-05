@@ -78,14 +78,14 @@ export interface ExecuteQueryStreamWithMetadata extends Duplex {
 
 export function checksumValid(
   buffer: Buffer,
-  expectedChecksum: number
+  expectedChecksum: number,
 ): boolean {
   return CRC32C.calculate(buffer) === expectedChecksum;
 }
 
 export function ensureUint8Array(
   bytes: Uint8Array | string,
-  encoding?: BufferEncoding
+  encoding?: BufferEncoding,
 ): Uint8Array {
   return bytes instanceof Uint8Array
     ? bytes
@@ -93,7 +93,7 @@ export function ensureUint8Array(
 }
 
 function _parseBufferToString(
-  key: bigint | string | Uint8Array
+  key: bigint | string | Uint8Array,
 ): bigint | string {
   // Uint8Array is always an instance of Buffer,
   // but we keep it in the if condition for TS linter's sake
@@ -123,7 +123,7 @@ export class EncodedKeyMap
    * always all buffers or all strings) so we don't need to handle this.
    */
   constructor(
-    entries?: ReadonlyArray<[bigint | string | Uint8Array, SqlValue]> | null
+    entries?: ReadonlyArray<[bigint | string | Uint8Array, SqlValue]> | null,
   ) {
     if (entries) {
       // Process entries to encode Buffer keys as base64
@@ -148,9 +148,9 @@ export class EncodedKeyMap
     callbackfn: (
       value: SqlValue,
       key: string | bigint | Uint8Array,
-      map: Map<string | bigint | Uint8Array, SqlValue>
+      map: Map<string | bigint | Uint8Array, SqlValue>,
     ) => void,
-    thisArg?: any
+    thisArg?: any,
   ): void {
     this.map_impl.forEach((value, key) => {
       callbackfn.call(thisArg, value[1], value[0], this.map_impl);

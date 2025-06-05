@@ -38,7 +38,7 @@ describe('Bigtable/EncodedKeyMap', () => {
       // get works with a new object
       assert.deepStrictEqual(
         map.get(Buffer.from('exampleKey')),
-        'valueForBufferKey'
+        'valueForBufferKey',
       );
       // get works with a regular string
       assert.deepStrictEqual(map.get('stringKey'), 'valueForStringKey');
@@ -61,7 +61,7 @@ describe('Bigtable/EncodedKeyMap', () => {
       // get works with a new object
       assert.deepStrictEqual(
         map.get(Buffer.from('exampleKey')),
-        'valueForBufferKey2'
+        'valueForBufferKey2',
       );
       // get works with a regular string
       assert.deepStrictEqual(map.get('stringKey'), 'valueForStringKey2');
@@ -70,7 +70,7 @@ describe('Bigtable/EncodedKeyMap', () => {
       map.set(bufferKey3, 'valueForBufferKey3');
       assert.deepStrictEqual(
         map.get(Buffer.from('exampleKey')),
-        'valueForBufferKey3'
+        'valueForBufferKey3',
       );
       map.set('stringKey', 'valueForStringKey3');
       assert.deepStrictEqual(map.get('stringKey'), 'valueForStringKey3');
@@ -85,7 +85,7 @@ describe('Bigtable/EncodedKeyMap', () => {
       // get works with a new object
       assert.deepStrictEqual(
         map.get(Buffer.from('exampleKey')),
-        'valueForBufferKey'
+        'valueForBufferKey',
       );
       // get works with a regular string
       assert.deepStrictEqual(map.get('stringKey'), 'valueForStringKey');
@@ -128,7 +128,7 @@ describe('Bigtable/EncodedKeyMap', () => {
       // get works with a buffer
       assert.deepStrictEqual(
         map.get(Buffer.from('Buffer1')),
-        'valueForBuffer1'
+        'valueForBuffer1',
       );
       // get works with a regular string
       assert.deepStrictEqual(map.get('stringKey1'), 'valueForString1');
@@ -142,7 +142,7 @@ describe('Bigtable/EncodedKeyMap', () => {
 
       assert.deepStrictEqual(
         map.get(Buffer.from('Buffer2')),
-        'valueForBuffer2'
+        'valueForBuffer2',
       );
       assert.deepStrictEqual(map.get('stringKey2'), 'valueForString2');
 

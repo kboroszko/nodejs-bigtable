@@ -184,7 +184,7 @@ export class ExecuteQueryStateMachine {
     preparedQuery: PreparedQuery,
     requestParams: any,
     retryOptions?: Partial<RetryOptions> | null,
-    protoBytesEncoding?: BufferEncoding
+    protoBytesEncoding?: BufferEncoding,
   ) {
     this.bigtable = bigtable;
     this.callerStream = callerStream;
@@ -200,18 +200,18 @@ export class ExecuteQueryStateMachine {
     this.retryTimer = null;
     this.timeoutTimer = setTimeout(
       this.handleTotalTimeout,
-      this.calculateTotalTimeout()
+      this.calculateTotalTimeout(),
     );
 
     this.state = 'AwaitingQueryPlan';
     this.preparedQuery.getData(
       this.handleQueryPlan,
-      this.calculateTotalTimeout()
+      this.calculateTotalTimeout(),
     );
   }
 
   private parseRetryOptions = (
-    input?: Partial<RetryOptions> | null
+    input?: Partial<RetryOptions> | null,
   ): StreamRetryOptions => {
     const rCodes = input?.retryCodes
       ? new Set(input?.retryCodes)
@@ -288,12 +288,12 @@ export class ExecuteQueryStateMachine {
 
   private makeNewRequest = (
     preparedQueryBytes?: Uint8Array | string,
-    metadata?: SqlTypes.ResultSetMetadata
+    metadata?: SqlTypes.ResultSetMetadata,
   ) => {
     if (this.valuesStream !== null) {
       // assume old streams were scrached.
       throw new Error(
-        'Internal error: making a request before streams from the last one was cleaned up.'
+        'Internal error: making a request before streams from the last one was cleaned up.',
       );
     }
 
@@ -336,7 +336,7 @@ export class ExecuteQueryStateMachine {
 
     return Math.min(
       calculatedNextRetryDelay,
-      this.retryOptions.maxRetryDelayMillis
+      this.retryOptions.maxRetryDelayMillis,
     );
   };
 
@@ -358,7 +358,7 @@ export class ExecuteQueryStateMachine {
       this.state = 'AwaitingQueryPlan';
       this.preparedQuery.getData(
         this.handleQueryPlan,
-        this.calculateTotalTimeout()
+        this.calculateTotalTimeout(),
       );
     } else if (this.state === 'DrainingBeforeResumeToken') {
       this.state = 'BeforeFirstResumeToken';
@@ -369,8 +369,8 @@ export class ExecuteQueryStateMachine {
     } else {
       this.fail(
         new Error(
-          `startNextAttempt can't be invoked on a current state ${this.state}`
-        )
+          `startNextAttempt can't be invoked on a current state ${this.state}`,
+        ),
       );
     }
   };
@@ -383,13 +383,13 @@ export class ExecuteQueryStateMachine {
     ) {
       this.retryTimer = setTimeout(
         this.startNextAttempt,
-        this.getNextRetryDelay()
+        this.getNextRetryDelay(),
       );
     } else {
       this.fail(
         new Error(
-          `handleDrainingDone can't be invoked on a current state ${this.state}`
-        )
+          `handleDrainingDone can't be invoked on a current state ${this.state}`,
+        ),
       );
     }
   };
@@ -422,13 +422,13 @@ export class ExecuteQueryStateMachine {
         } else {
           this.fail(
             new Error(
-              `Can't handle a stream error in the current state ${this.state}`
-            )
+              `Can't handle a stream error in the current state ${this.state}`,
+            ),
           );
         }
       } else {
         this.fail(
-          new Error(`Maximum retry limit exeeded. Last error: ${err.message}`)
+          new Error(`Maximum retry limit exeeded. Last error: ${err.message}`),
         );
       }
     } else if (isExpiredQueryError(err)) {
@@ -442,8 +442,8 @@ export class ExecuteQueryStateMachine {
       } else {
         this.fail(
           new Error(
-            `Can't handle expired query error in the current state ${this.state}`
-          )
+            `Can't handle expired query error in the current state ${this.state}`,
+          ),
         );
       }
     } else {
@@ -454,7 +454,7 @@ export class ExecuteQueryStateMachine {
   private handleQueryPlan: PreparedQueryDataCallback = (
     err?: Error,
     preparedQueryBytes?: Uint8Array | string,
-    metadata?: SqlTypes.ResultSetMetadata
+    metadata?: SqlTypes.ResultSetMetadata,
   ) => {
     if (this.state === 'AwaitingQueryPlan') {
       if (err) {
@@ -462,13 +462,13 @@ export class ExecuteQueryStateMachine {
         if (this.numErrors <= this.retryOptions.maxRetries) {
           this.preparedQuery.getData(
             this.handleQueryPlan,
-            this.calculateTotalTimeout()
+            this.calculateTotalTimeout(),
           );
         } else {
           this.fail(
             new Error(
-              `Failed to get query plan. Maximum retry limit exceeded. Last error: ${err.message}`
-            )
+              `Failed to get query plan. Maximum retry limit exceeded. Last error: ${err.message}`,
+            ),
           );
         }
       } else {
@@ -477,7 +477,7 @@ export class ExecuteQueryStateMachine {
       }
     } else {
       throw new Error(
-        `handleQueryPlan can't be invoked on a current state ${this.state}`
+        `handleQueryPlan can't be invoked on a current state ${this.state}`,
       );
     }
   };
@@ -496,8 +496,8 @@ export class ExecuteQueryStateMachine {
     } else {
       this.fail(
         new Error(
-          `Internal Error: recieved data in an invalid state ${this.state}`
-        )
+          `Internal Error: recieved data in an invalid state ${this.state}`,
+        ),
       );
     }
   };
@@ -514,8 +514,8 @@ export class ExecuteQueryStateMachine {
     } else {
       this.fail(
         new Error(
-          `Internal Error: Cannot handle stream end in state: ${this.state}`
-        )
+          `Internal Error: Cannot handle stream end in state: ${this.state}`,
+        ),
       );
     }
   };
@@ -532,7 +532,7 @@ export class ExecuteQueryStateMachine {
   private handleCallersEnd = (
     chunk?: any,
     encoding?: any,
-    cb?: () => void
+    cb?: () => void,
   ): CallerStream => {
     if (this.state !== 'Failed' && this.state !== 'Finished') {
       this.clearTimers();
@@ -548,7 +548,7 @@ export function createCallerStream(
   readerStream: ProtobufReaderTransformer,
   resultStream: ExecuteQueryStreamWithMetadata,
   metadataConsumer: MetadataConsumer,
-  setCallerCancelled: (v: boolean) => void
+  setCallerCancelled: (v: boolean) => void,
 ): CallerStream {
   const callerStream = pumpify.obj([readerStream, resultStream]);
   callerStream.getMetadata = resultStream.getMetadata.bind(resultStream);

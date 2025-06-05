@@ -33,7 +33,7 @@ export class ByteBufferTransformer extends Transform {
   }
 
   private resetQueueAndBuffer = (
-    estimatedBatchSize: number | null | undefined
+    estimatedBatchSize: number | null | undefined,
   ): void => {
     this.messageQueue = [];
     this.messageBuffer = new Array(estimatedBatchSize || 0);
@@ -41,7 +41,7 @@ export class ByteBufferTransformer extends Transform {
 
   private flushMessageBuffer = (
     batchChecksum: number,
-    estimatedBatchSize: number | null | undefined
+    estimatedBatchSize: number | null | undefined,
   ): void => {
     if (this.messageBuffer.length === 0) {
       throw new Error('Recieved empty batch with non-zero checksum.');
@@ -57,7 +57,7 @@ export class ByteBufferTransformer extends Transform {
   private pushMessages = (resumeToken: string | Uint8Array): void => {
     const token = SqlValues.ensureUint8Array(
       resumeToken,
-      this.protoBytesEncoding
+      this.protoBytesEncoding,
     );
     if (this.messageBuffer.length !== 0) {
       throw new Error('Recieved incomplete batch of rows.');
@@ -73,7 +73,7 @@ export class ByteBufferTransformer extends Transform {
    * @param partialResultSet The `PartialResultSet` message to process.
    */
   private processProtoRowsBatch = (
-    partialResultSet: google.bigtable.v2.IPartialResultSet
+    partialResultSet: google.bigtable.v2.IPartialResultSet,
   ): void => {
     let handled = false;
     if (partialResultSet.reset) {
@@ -85,8 +85,8 @@ export class ByteBufferTransformer extends Transform {
       this.messageBuffer.push(
         SqlValues.ensureUint8Array(
           partialResultSet.protoRowsBatch.batchData,
-          this.protoBytesEncoding
-        )
+          this.protoBytesEncoding,
+        ),
       );
       handled = true;
     }
@@ -94,7 +94,7 @@ export class ByteBufferTransformer extends Transform {
     if (partialResultSet.batchChecksum) {
       this.flushMessageBuffer(
         partialResultSet.batchChecksum,
-        partialResultSet.estimatedBatchSize
+        partialResultSet.estimatedBatchSize,
       );
       handled = true;
     }
@@ -112,7 +112,7 @@ export class ByteBufferTransformer extends Transform {
   _transform(
     chunk: google.bigtable.v2.ExecuteQueryResponse,
     _encoding: BufferEncoding,
-    callback: TransformCallback
+    callback: TransformCallback,
   ) {
     let maybeError: Error | null = null;
     const reponse = chunk as google.bigtable.v2.ExecuteQueryResponse;
@@ -127,7 +127,7 @@ export class ByteBufferTransformer extends Transform {
       }
     } catch (error) {
       maybeError = new Error(
-        `Internal Error. Failed to process response: ${error}`
+        `Internal Error. Failed to process response: ${error}`,
       );
     }
     callback(maybeError);
@@ -136,7 +136,9 @@ export class ByteBufferTransformer extends Transform {
   _flush(callback: TransformCallback): void {
     if (this.messageBuffer.length > 0) {
       callback(
-        new Error('Internal Error. Last message did not contain a resumeToken.')
+        new Error(
+          'Internal Error. Last message did not contain a resumeToken.',
+        ),
       );
       return;
     }

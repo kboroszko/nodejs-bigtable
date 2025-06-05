@@ -176,7 +176,7 @@ export interface CreateTableFromBackupConfig {
 
 export type ExecuteQueryCallback = (
   err: Error | null,
-  rows?: QueryResultRow[]
+  rows?: QueryResultRow[],
 ) => void;
 
 export interface ExecuteQueryOptions {
@@ -189,7 +189,7 @@ export type ExecuteQueryResponse = [QueryResultRow[]];
 
 export type PrepareQueryCallback = (
   err: Error | null,
-  preparedQuery?: PreparedQuery
+  preparedQuery?: PreparedQuery,
 ) => void;
 
 export interface PrepareQueryOptions {
@@ -1533,11 +1533,10 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     return new AuthorizedView(this, tableName, viewName);
   }
 
-
   prepareQuery(options: PrepareQueryOptions): Promise<PrepareQueryResponse>;
   prepareQuery(
     options: PrepareQueryOptions,
-    callback: PrepareQueryCallback
+    callback: PrepareQueryCallback,
   ): void;
   prepareQuery(query: string): Promise<PrepareQueryResponse>;
   prepareQuery(query: string, callback: PrepareQueryCallback): void;
@@ -1559,7 +1558,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
    */
   prepareQuery(
     queryOrOpts: string | PrepareQueryOptions,
-    callback?: PrepareQueryCallback
+    callback?: PrepareQueryCallback,
   ): void | Promise<PrepareQueryResponse> {
     const opts: PrepareQueryOptions =
       typeof queryOrOpts === 'string' ? {query: queryOrOpts} : queryOrOpts;
@@ -1588,8 +1587,8 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
             this.bigtable,
             args[1]!,
             request,
-            opts.parameterTypes || {}
-          )
+            opts.parameterTypes || {},
+          ),
         );
       } catch (err) {
         callback!(err as any, undefined);
@@ -1600,12 +1599,12 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
   executeQuery(options: ExecuteQueryOptions): Promise<ExecuteQueryResponse>;
   executeQuery(
     options: ExecuteQueryOptions,
-    callback: ExecuteQueryCallback
+    callback: ExecuteQueryCallback,
   ): void;
   executeQuery(preparedQuery: PreparedQuery): Promise<ExecuteQueryResponse>;
   executeQuery(
     preparedQuery: PreparedQuery,
-    callback: ExecuteQueryCallback
+    callback: ExecuteQueryCallback,
   ): void;
   /**
    * Execute a SQL query on an instance.
@@ -1626,7 +1625,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
    */
   executeQuery(
     preparedQueryOrOpts: PreparedQuery | ExecuteQueryOptions,
-    callback?: ExecuteQueryCallback
+    callback?: ExecuteQueryCallback,
   ): void | Promise<ExecuteQueryResponse> {
     let opts: ExecuteQueryOptions;
     if (preparedQueryOrOpts instanceof PreparedQuery) {
@@ -1639,7 +1638,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     stream.on('error', callback!).pipe(
       concat((rows: QueryResultRow[]) => {
         callback!(null, rows);
-      })
+      }),
     );
   }
 
@@ -1663,7 +1662,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
    * region_tag:bigtable_api_create_query_stream
    */
   createExecuteQueryStream(
-    opts: ExecuteQueryOptions
+    opts: ExecuteQueryOptions,
   ): ExecuteQueryStreamWithMetadata {
     /**
      * We create the following streams:
@@ -1692,12 +1691,12 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
     const resultStream = new ExecuteQueryStreamTransformWithMetadata(
       metadataConsumer,
       hasCallerCancelled,
-      opts.encoding
+      opts.encoding,
     );
     const protoParams: {[k: string]: google.bigtable.v2.IValue} | null =
       parseParameters(
         opts.parameters || {},
-        opts.preparedQuery.getParameterTypes()
+        opts.preparedQuery.getParameterTypes(),
       );
 
     const readerStream = new ProtobufReaderTransformer(metadataConsumer);
@@ -1714,7 +1713,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
       readerStream,
       resultStream,
       metadataConsumer,
-      setCallerCancelled
+      setCallerCancelled,
     );
 
     const stateMachine = new ExecuteQueryStateMachine(
@@ -1723,7 +1722,7 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
       opts.preparedQuery,
       reqOpts,
       opts.retryOptions?.retry,
-      opts.encoding
+      opts.encoding,
     );
 
     // make sure stateMachine is not garbage collected as long as the callerStream.
@@ -1731,7 +1730,6 @@ Please use the format 'my-instance' or '${bigtable.projectName}/instances/my-ins
 
     return callerStream;
   }
-
 }
 
 /*! Developer Documentation

@@ -113,7 +113,7 @@ class FakeTable extends Table {
 function executeQueryResultWithMetadata(
   instance: any,
   preparedQuery: PreparedQuery | null,
-  callback: (...args: any[]) => void
+  callback: (...args: any[]) => void,
 ): void {
   const stream = instance.createExecuteQueryStream({preparedQuery});
   stream.on('error', callback!).pipe(
@@ -124,7 +124,7 @@ function executeQueryResultWithMetadata(
       } else {
         callback!(null, rows, metadata);
       }
-    })
+    }),
   );
 }
 
@@ -2073,7 +2073,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         ['bytes', pbType({bytesType: {}})],
         ['date', pbType({dateType: {}})],
         ['timestamp', pbType({timestampType: {}})],
-        ['bool', pbType({boolType: {}})]
+        ['bool', pbType({boolType: {}})],
       );
 
       responsesRef.setResponses([
@@ -2092,7 +2092,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
               nanos: 5678,
             }),
           },
-          {boolValue: true}
+          {boolValue: true},
         ),
       ]);
       executeQueryResultWithMetadata(
@@ -2115,7 +2115,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.deepEqual(result![0].get(5), new PreciseDate([1234, 5678]));
           assert.strictEqual(result![0].get(6), true);
           done();
-        }
+        },
       );
     });
 
@@ -2141,14 +2141,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(result![1].get(0), BigInt(2));
           assert.strictEqual(result![2].get(0), BigInt(3));
           done();
-        }
+        },
       );
     });
 
     it('handles nulls properly', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
 
       responsesRef.setResponses([
@@ -2188,7 +2188,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(result![4].get(1), BigInt(5));
 
           done();
-        }
+        },
       );
     });
 
@@ -2243,7 +2243,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
               ],
             },
           }),
-        ]
+        ],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -2293,7 +2293,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             arrayValue: {
               values: [{intValue: 1}, {}, {}],
             },
-          }
+          },
         ),
       ]);
       executeQueryResultWithMetadata(
@@ -2328,14 +2328,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(structWithNulls.get('f3'), null);
 
           done();
-        }
+        },
       );
     });
 
     it('parses multiple rows in one batch', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -2343,14 +2343,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           undefined,
           undefined,
           {intValue: 1},
-          {intValue: 2}
+          {intValue: 2},
         ),
         createProtoRows(
           undefined,
           undefined,
           undefined,
           {intValue: 3},
-          {intValue: 4}
+          {intValue: 4},
         ),
         createProtoRows('token1', 111, undefined, {intValue: 5}, {intValue: 6}),
       ]);
@@ -2378,7 +2378,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(result![2].get(1), BigInt(6));
           assert.strictEqual(result![2].get('f2'), BigInt(6));
           done();
-        }
+        },
       );
     });
 
@@ -2409,7 +2409,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(structResult[1], BigInt(2));
           assert.strictEqual(structResult[2], BigInt(3));
           done();
-        }
+        },
       );
     });
 
@@ -2427,7 +2427,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
               ],
             },
           }),
-        ]
+        ],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -2439,7 +2439,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             arrayValue: {
               values: [{intValue: 1}, {floatValue: 2.5}, {stringValue: '3'}],
             },
-          }
+          },
         ),
       ]);
       executeQueryResultWithMetadata(
@@ -2465,7 +2465,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(structResult.get(1), 2.5);
           assert.strictEqual(structResult.get(2), '3');
           done();
-        }
+        },
       );
     });
 
@@ -2546,7 +2546,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(mapResult1.get(BigInt(5)), 'e');
           assert.strictEqual(mapResult1.get(BigInt(6)), 'f');
           done();
-        }
+        },
       );
     });
 
@@ -2599,7 +2599,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.strictEqual(mapResult0.get(BigInt(1)), 'c');
           assert.strictEqual(mapResult0.get(BigInt(2)), 'b');
           done();
-        }
+        },
       );
     });
 
@@ -2638,7 +2638,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             result![0].get('f1');
           }, Error);
           done();
-        }
+        },
       );
     });
 
@@ -2652,8 +2652,8 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             null,
             createPrepareQueryResponse(
               ['f1', pbType({int64Type: {}})],
-              ['f2', type as any]
-            )
+              ['f2', type as any],
+            ),
           );
         },
       } as Bigtable;
@@ -2681,7 +2681,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
                   valueType: pbType({int64Type: {}}),
                 },
               }),
-            ])
+            ]),
           );
         },
       } as Bigtable;
@@ -2759,8 +2759,8 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           Array.from({length: 11}, (_, i) => [
             String.fromCharCode(97 + i),
             SqlTypes.Int64(),
-          ])
-        ) // parameter types: {a:INT64, b:INT64, ... }
+          ]),
+        ), // parameter types: {a:INT64, b:INT64, ... }
       );
       responsesRef.setResponses([
         createProtoRows('token1', 111, undefined, {intValue: 1}),
@@ -2793,38 +2793,38 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.deepEqual(reqOpts.params!['c'].intValue, Long.fromInt(0));
           assert.deepEqual(
             reqOpts.params!['d'].intValue,
-            Long.fromNumber(Number.MAX_SAFE_INTEGER)
+            Long.fromNumber(Number.MAX_SAFE_INTEGER),
           );
           assert.deepEqual(
             reqOpts.params!['e'].intValue,
-            Long.fromNumber(Number.MIN_SAFE_INTEGER)
+            Long.fromNumber(Number.MIN_SAFE_INTEGER),
           );
           assert.deepEqual(
             reqOpts.params!['f'].intValue,
-            Long.fromString('9007199254740992')
+            Long.fromString('9007199254740992'),
           );
           assert.deepEqual(
             reqOpts.params!['g'].intValue,
-            Long.fromString('-9007199254740992')
+            Long.fromString('-9007199254740992'),
           );
           assert.deepEqual(
             reqOpts.params!['h'].intValue,
-            Long.fromString('1152921504606846976')
+            Long.fromString('1152921504606846976'),
           );
           assert.deepEqual(
             reqOpts.params!['i'].intValue,
-            Long.fromString('-1152921504606846976')
+            Long.fromString('-1152921504606846976'),
           );
           assert.deepEqual(
             reqOpts.params!['j'].intValue,
-            Long.fromString('9223372036854775807')
+            Long.fromString('9223372036854775807'),
           );
           assert.deepEqual(
             reqOpts.params!['k'].intValue,
-            Long.fromString('-9223372036854775808')
+            Long.fromString('-9223372036854775808'),
           );
           done();
-        }
+        },
       );
     });
 
@@ -2835,17 +2835,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Int64()}
+            {a: SqlTypes.Int64()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 'a'},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value a cannot be converted to int64.'}
+        {message: 'Value a cannot be converted to int64.'},
       );
       assert.throws(
         () => {
@@ -2853,17 +2853,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Float64()}
+            {a: SqlTypes.Float64()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: BigInt(1)},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value 1 cannot be converted to float64.'}
+        {message: 'Value 1 cannot be converted to float64.'},
       );
       assert.throws(
         () => {
@@ -2871,17 +2871,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.String()}
+            {a: SqlTypes.String()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 1},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value 1 cannot be converted to string.'}
+        {message: 'Value 1 cannot be converted to string.'},
       );
       assert.throws(
         () => {
@@ -2889,17 +2889,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Bytes()}
+            {a: SqlTypes.Bytes()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 1},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value 1 cannot be converted to bytes.'}
+        {message: 'Value 1 cannot be converted to bytes.'},
       );
       assert.throws(
         () => {
@@ -2907,17 +2907,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Bool()}
+            {a: SqlTypes.Bool()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 1},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value 1 cannot be converted to boolean.'}
+        {message: 'Value 1 cannot be converted to boolean.'},
       );
       assert.throws(
         () => {
@@ -2925,20 +2925,20 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Timestamp()}
+            {a: SqlTypes.Timestamp()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 1},
             } as any,
-            () => {}
+            () => {},
           );
         },
         {
           message:
             'Value 1 cannot be converted to timestamp, please use PreciseDate instead.',
-        }
+        },
       );
       assert.throws(
         () => {
@@ -2946,17 +2946,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Date()}
+            {a: SqlTypes.Date()},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 1},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value 1 cannot be converted to date.'}
+        {message: 'Value 1 cannot be converted to date.'},
       );
       assert.throws(
         () => {
@@ -2964,17 +2964,17 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Array(SqlTypes.Int64())}
+            {a: SqlTypes.Array(SqlTypes.Int64())},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: 1},
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Value 1 cannot be converted to an array.'}
+        {message: 'Value 1 cannot be converted to an array.'},
       );
       assert.throws(
         () => {
@@ -2982,20 +2982,20 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Array(SqlTypes.Int64())}
+            {a: SqlTypes.Array(SqlTypes.Int64())},
           );
           instance.executeQuery(
             {
               preparedQuery,
               parameters: {a: [1, 'a']},
             } as any,
-            () => {}
+            () => {},
           );
         },
         {
           message:
             'Error while converting element 0 of an array: Value 1 cannot be converted to int64 - argument of type INT64 should by passed as BigInt.',
-        }
+        },
       );
       // TS does not permit passing a Struct or a Map as parameters,
       // but we want to check it throws an error
@@ -3005,7 +3005,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
             BIGTABLE,
             createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
             {} as any,
-            {a: SqlTypes.Map(SqlTypes.Int64(), SqlTypes.Int64())}
+            {a: SqlTypes.Map(SqlTypes.Int64(), SqlTypes.Int64())},
           );
           instance.executeQuery(
             {
@@ -3017,10 +3017,10 @@ describe('Bigtable/ExecuteQueryInstance', () => {
                 ]),
               },
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Map is not a supported query param type'}
+        {message: 'Map is not a supported query param type'},
       );
       assert.throws(
         () => {
@@ -3033,7 +3033,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
                 name: 'f1',
                 type: SqlTypes.Int64(),
               }),
-            }
+            },
           );
           instance.executeQuery(
             {
@@ -3045,10 +3045,10 @@ describe('Bigtable/ExecuteQueryInstance', () => {
                 }),
               },
             } as any,
-            () => {}
+            () => {},
           );
         },
-        {message: 'Struct is not a supported query param type'}
+        {message: 'Struct is not a supported query param type'},
       );
     });
 
@@ -3059,7 +3059,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         {} as any,
         {
           a: SqlTypes.Int64(),
-        }
+        },
       );
       responsesRef.setResponses([
         createProtoRows('token1', 111, undefined, {intValue: 1}),
@@ -3076,7 +3076,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
 
           assert.notStrictEqual(reqOpts.params!['a'].type!.int64Type, null);
           done();
-        }
+        },
       );
     });
 
@@ -3094,7 +3094,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           f: SqlTypes.Date(),
           g: SqlTypes.Timestamp(),
           h: SqlTypes.Array(SqlTypes.Int64()),
-        }
+        },
       );
       responsesRef.setResponses([
         createProtoRows('token1', 111, undefined, {intValue: 1}),
@@ -3128,10 +3128,10 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           assert.notStrictEqual(reqOpts.params!['h'].type!.arrayType, null);
           assert.notStrictEqual(
             reqOpts.params!['h'].type!.arrayType?.elementType,
-            null
+            null,
           );
           done();
-        }
+        },
       );
     });
 
@@ -3140,7 +3140,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
-        {a: SqlTypes.Int64()}
+        {a: SqlTypes.Int64()},
       );
       assert.throws(
         () => {
@@ -3149,13 +3149,13 @@ describe('Bigtable/ExecuteQueryInstance', () => {
               preparedQuery,
               parameters: {a: BigInt('-9223372036854775809')},
             } as any,
-            () => {}
+            () => {},
           );
         },
         {
           message:
             'Value -9223372036854775809 cannot be converted to int64 - it is out of range.',
-        }
+        },
       );
       assert.throws(
         () => {
@@ -3164,13 +3164,13 @@ describe('Bigtable/ExecuteQueryInstance', () => {
               preparedQuery,
               parameters: {a: BigInt('9223372036854775808')},
             } as any,
-            () => {}
+            () => {},
           );
         },
         {
           message:
             'Value 9223372036854775808 cannot be converted to int64 - it is out of range.',
-        }
+        },
       );
     });
 
@@ -3211,7 +3211,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
         ['f2', pbType({int64Type: {}})],
-        ['f1', pbType({int64Type: {}})]
+        ['f1', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -3220,7 +3220,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           undefined,
           {intValue: 1},
           {intValue: 2},
-          {intValue: 3}
+          {intValue: 3},
         ),
       ]);
       executeQueryResultWithMetadata(
@@ -3247,14 +3247,14 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           }, Error);
 
           done();
-        }
+        },
       );
     });
 
     it('unfinished batch is detected', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(undefined, undefined, undefined, {intValue: 3}),
@@ -3269,7 +3269,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     it('token without batch ending detected', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows('token', undefined, undefined, {intValue: 3}),
@@ -3284,7 +3284,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     it('reset works', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
 
       const respWithReset1 = createProtoRows(undefined, undefined, undefined, {
@@ -3297,7 +3297,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
         111,
         undefined,
         {intValue: 3},
-        {intValue: 4}
+        {intValue: 4},
       );
       respWithReset2.results!.reset = true;
 
@@ -3307,7 +3307,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           undefined,
           undefined,
           {intValue: 1},
-          {intValue: 2}
+          {intValue: 2},
         ),
         respWithReset1,
         respWithReset2,
@@ -3326,7 +3326,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     it('partial row after token detected', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -3335,7 +3335,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           undefined,
           {intValue: 1},
           {intValue: 2},
-          {intValue: 3}
+          {intValue: 3},
         ),
       ]);
       instance.executeQuery(preparedQuery, (err, result) => {
@@ -3348,7 +3348,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
     it('partial row after batch checksum detected', done => {
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -3357,7 +3357,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           undefined,
           {intValue: 1},
           {intValue: 2},
-          {intValue: 3}
+          {intValue: 3},
         ),
         createProtoRows('token1', 222, undefined, {intValue: 4}),
       ]);
@@ -3372,7 +3372,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
       checksumIsValid = false;
       const preparedQuery = createPreparedQuery(
         ['f1', pbType({int64Type: {}})],
-        ['f2', pbType({int64Type: {}})]
+        ['f2', pbType({int64Type: {}})],
       );
       responsesRef.setResponses([
         createProtoRows(
@@ -3380,7 +3380,7 @@ describe('Bigtable/ExecuteQueryInstance', () => {
           111,
           undefined,
           {intValue: 1},
-          {intValue: 2}
+          {intValue: 2},
         ),
         createProtoRows('token1', 222, undefined, {intValue: 3}, {intValue: 4}),
       ]);

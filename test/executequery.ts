@@ -143,49 +143,49 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, 111, undefined, {intValue: 2})
+              createProtoRows(undefined, 111, undefined, {intValue: 2}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', undefined, undefined)
+              createProtoRows('token1', undefined, undefined),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token2', undefined, undefined)
+              createProtoRows('token2', undefined, undefined),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.emit('end');
             bigtableStream.emit('close');
@@ -198,7 +198,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
   });
@@ -236,22 +236,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[1](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', 111, undefined, {intValue: 1})
+              createProtoRows('token1', 111, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.emit('end');
             bigtableStream.emit('close');
@@ -262,7 +262,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -304,13 +304,13 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -320,7 +320,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainAndRefreshQueryPlan'
+              'DrainAndRefreshQueryPlan',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             assert.equal(preparedQuery.markedAsExpired, true);
@@ -334,22 +334,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[1](
               undefined,
               'bytes',
-              createResultSetMetadata(['f2', pbType({int64Type: {}})])
+              createResultSetMetadata(['f2', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows('token1', 111, undefined, {intValue: 1})
+              createProtoRows('token1', 111, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream2.emit('end');
             bigtableStream2.emit('close');
@@ -364,7 +364,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -406,22 +406,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -431,7 +431,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainAndRefreshQueryPlan'
+              'DrainAndRefreshQueryPlan',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -444,22 +444,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[1](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows('token1', 111, undefined, {intValue: 2})
+              createProtoRows('token1', 111, undefined, {intValue: 2}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream2.emit('end');
             bigtableStream2.emit('close');
@@ -472,7 +472,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -514,22 +514,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', 111, undefined, {intValue: 1})
+              createProtoRows('token1', 111, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.write(expiredError);
           },
@@ -541,7 +541,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
   });
@@ -578,13 +578,13 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.emit('end');
             bigtableStream.emit('close');
@@ -596,7 +596,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -632,22 +632,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.emit('end');
             bigtableStream.emit('close');
@@ -659,7 +659,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -693,40 +693,40 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', 111, undefined, {intValue: 2})
+              createProtoRows('token1', 111, undefined, {intValue: 2}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 3})
+              createProtoRows(undefined, undefined, undefined, {intValue: 3}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.emit('end');
             bigtableStream.emit('close');
@@ -740,7 +740,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -776,22 +776,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', undefined, undefined)
+              createProtoRows('token1', undefined, undefined),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream.emit('end');
             bigtableStream.emit('close');
@@ -803,7 +803,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
   });
@@ -844,13 +844,13 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -860,7 +860,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainingBeforeResumeToken'
+              'DrainingBeforeResumeToken',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -871,25 +871,25 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows('token', 111, undefined, {intValue: 2})
+              createProtoRows('token', 111, undefined, {intValue: 2}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream2.emit('end');
             bigtableStream2.emit('close');
@@ -902,7 +902,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -941,22 +941,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -966,7 +966,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainingBeforeResumeToken'
+              'DrainingBeforeResumeToken',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -977,25 +977,25 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 2})
+              createProtoRows(undefined, undefined, undefined, {intValue: 2}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows('token', 111, undefined, {intValue: 3})
+              createProtoRows('token', 111, undefined, {intValue: 3}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream2.emit('end');
             bigtableStream2.emit('close');
@@ -1009,10 +1009,9 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
-
 
     it('retryable error before token, byteBuffer keeps emitting data', done => {
       // in this test we simulate a situation where even though the
@@ -1044,7 +1043,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
       resultStream.on('data', (row: any) => {
         responses.push(row);
       });
-      let valuesStream : any = null;
+      let valuesStream: any = null;
       performCallbacks(
         [
           () => {
@@ -1053,22 +1052,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -1077,21 +1076,23 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             bigtableStream.emit('error', retryableError);
             // emit data after the error was emitted
             valuesStream.emit('data', [
-              createProtoRows(undefined, undefined, undefined, {intValue: 2}).results?.protoRowsBatch?.batchData,
-              "unreachableToken1"
-            ])
+              createProtoRows(undefined, undefined, undefined, {intValue: 2})
+                .results?.protoRowsBatch?.batchData,
+              'unreachableToken1',
+            ]);
           },
           () => {
             // emit data after the error was emitted
             valuesStream.emit('data', [
-              createProtoRows(undefined, undefined, undefined, {intValue: 3}).results?.protoRowsBatch?.batchData,
-              "unreachableToken2"
-            ])
+              createProtoRows(undefined, undefined, undefined, {intValue: 3})
+                .results?.protoRowsBatch?.batchData,
+              'unreachableToken2',
+            ]);
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainingBeforeResumeToken'
+              'DrainingBeforeResumeToken',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -1102,25 +1103,25 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 4})
+              createProtoRows(undefined, undefined, undefined, {intValue: 4}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream2.write(
-              createProtoRows('token', 111, undefined, {intValue: 5})
+              createProtoRows('token', 111, undefined, {intValue: 5}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream2.emit('end');
             bigtableStream2.emit('close');
@@ -1134,7 +1135,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1184,22 +1185,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -1209,7 +1210,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainingBeforeResumeToken'
+              'DrainingBeforeResumeToken',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -1220,7 +1221,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream3 as any;
@@ -1230,7 +1231,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainAndRefreshQueryPlan'
+              'DrainAndRefreshQueryPlan',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -1243,22 +1244,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[1](
               undefined,
               'bytes',
-              createResultSetMetadata(['f2', pbType({int64Type: {}})])
+              createResultSetMetadata(['f2', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream3.write(
-              createProtoRows('token1', 111, undefined, {intValue: 2})
+              createProtoRows('token1', 111, undefined, {intValue: 2}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             bigtableStream3.emit('end');
             bigtableStream3.emit('close');
@@ -1275,7 +1276,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1329,22 +1330,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', 111, undefined, {intValue: 1})
+              createProtoRows('token1', 111, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -1354,7 +1355,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'DrainingAfterResumeToken'
+              'DrainingAfterResumeToken',
             );
             assert.equal(resultStream._stateMachine.retryTimer !== null, true);
             // speed up the retry timer
@@ -1365,7 +1366,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             assert.equal(preparedQuery.callbacks.length, 1); // query plan was not refreshed
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream3 as any;
@@ -1380,7 +1381,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1424,22 +1425,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows(undefined, undefined, undefined, {intValue: 1})
+              createProtoRows(undefined, undefined, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -1453,7 +1454,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1496,22 +1497,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', 111, undefined, {intValue: 1})
+              createProtoRows('token1', 111, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             BIGTABLE.request = () => {
               return bigtableStream2 as any;
@@ -1526,7 +1527,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
   });
@@ -1568,7 +1569,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1619,7 +1620,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1655,13 +1656,13 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             resultStream._stateMachine.handleTotalTimeout();
           },
@@ -1672,7 +1673,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
 
@@ -1707,22 +1708,22 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             preparedQuery.callbacks[0](
               undefined,
               'bytes',
-              createResultSetMetadata(['f1', pbType({int64Type: {}})])
+              createResultSetMetadata(['f1', pbType({int64Type: {}})]),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'BeforeFirstResumeToken'
+              'BeforeFirstResumeToken',
             );
             bigtableStream.write(
-              createProtoRows('token1', 111, undefined, {intValue: 1})
+              createProtoRows('token1', 111, undefined, {intValue: 1}),
             );
           },
           () => {
             assert.equal(
               resultStream._stateMachine.state,
-              'AfterFirstResumeToken'
+              'AfterFirstResumeToken',
             );
             resultStream._stateMachine.handleTotalTimeout();
           },
@@ -1734,7 +1735,7 @@ describe('Bigtable/ExecuteQueryStateMachine', () => {
             done();
           },
         ],
-        1
+        1,
       );
     });
   });
@@ -1768,7 +1769,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
         BIGTABLE,
         createPrepareQueryResponse(['f', pbType({int64Type: {}})]),
         {} as any,
-        {a: SqlTypes.Int64()}
+        {a: SqlTypes.Int64()},
       );
       preparedQuery.getData((err, pqBytes, metadata) => {
         assert.equal(err, undefined);
@@ -1874,7 +1875,7 @@ describe('Bigtable/ExecuteQueryPreparedQueryObject', () => {
         {} as any,
         {
           a: SqlTypes.Int64(),
-        }
+        },
       );
       // Set the time to 100 ms after the "should-refresh" point in time
       clock.setSystemTime(someTimestamp - SHOULD_REFRESH_SOON_PERIOD_MS + 100);

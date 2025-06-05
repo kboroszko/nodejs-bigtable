@@ -12,7 +12,7 @@ export const SHOULD_REFRESH_SOON_PERIOD_MS = 1000;
 export type PreparedQueryDataCallback = (
   err?: Error,
   preparedQueryBytes?: Uint8Array | string,
-  metadata?: SqlTypes.ResultSetMetadata
+  metadata?: SqlTypes.ResultSetMetadata,
 ) => void;
 
 interface IRetryRequest {
@@ -48,7 +48,7 @@ export class PreparedQuery extends EventEmitter {
     bigtable: Bigtable,
     response: google.bigtable.v2.PrepareQueryResponse,
     retryRequest: IRetryRequest,
-    parameterTypes: {[param: string]: SqlTypes.Type}
+    parameterTypes: {[param: string]: SqlTypes.Type},
   ) {
     super();
     this.bigtable = bigtable;
@@ -114,7 +114,7 @@ export class PreparedQuery extends EventEmitter {
    */
   private handlePrepareQueryResponse = (
     err: ServiceError | null,
-    response?: google.bigtable.v2.PrepareQueryResponse
+    response?: google.bigtable.v2.PrepareQueryResponse,
   ): void => {
     if (this.isRefreshing) {
       this.isRefreshing = false;
@@ -136,7 +136,7 @@ export class PreparedQuery extends EventEmitter {
       }
     } else {
       const err = new Error(
-        'Invalid state: PrepareQueryResponse recieved when not refreshing.'
+        'Invalid state: PrepareQueryResponse recieved when not refreshing.',
       );
       console.error(err);
       throw err;
@@ -180,7 +180,7 @@ export class PreparedQuery extends EventEmitter {
             this.lastRefreshError ||
               new Error('Getting a fresh query plan failed.'),
             undefined,
-            undefined
+            undefined,
           );
         } else {
           listener.tryInvoke(undefined, this.preparedQueryBytes, this.metadata);
@@ -191,7 +191,7 @@ export class PreparedQuery extends EventEmitter {
       // regardless if the plan needs refreshing or not.
       setTimeout(
         () => callback(undefined, this.preparedQueryBytes, this.metadata),
-        0
+        0,
       );
     }
   };
@@ -226,8 +226,8 @@ class CallbackWithTimeout {
     this.timer = setTimeout(() => {
       this.tryInvoke(
         new Error(
-          'Deadline Exceeded waiting for prepared statement to refresh.'
-        )
+          'Deadline Exceeded waiting for prepared statement to refresh.',
+        ),
       );
     }, timeout);
   }
@@ -259,7 +259,7 @@ class CallbackWithTimeout {
 }
 
 function timestampFromResponse(
-  response: google.bigtable.v2.PrepareQueryResponse
+  response: google.bigtable.v2.PrepareQueryResponse,
 ): number | null {
   if (!response.validUntil?.seconds) {
     return null;

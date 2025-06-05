@@ -32,7 +32,7 @@ export const IGNORED_STATUS_CODES = new Set([grpc.status.CANCELLED.valueOf()]);
  * @param error
  */
 export const isRstStreamError = (
-  error: GoogleError | ServiceError
+  error: GoogleError | ServiceError,
 ): boolean => {
   // Retry on "received rst stream" errors
   if (error.code === grpc.status.INTERNAL && error.message) {
@@ -42,7 +42,7 @@ export const isRstStreamError = (
       (error_message.includes('rst_stream') ||
         error_message.includes('rst stream') ||
         error_message.includes(
-          'Received unexpected EOS on DATA frame from server'
+          'Received unexpected EOS on DATA frame from server',
         ))
     );
   }
@@ -55,7 +55,7 @@ export const isRstStreamError = (
  * @param error
  */
 export const isExpiredQueryError = (
-  error: GoogleError | ServiceError
+  error: GoogleError | ServiceError,
 ): boolean => {
   if (error.code === grpc.status.FAILED_PRECONDITION && error.message) {
     const error_message = (error.message || '').toLowerCase();

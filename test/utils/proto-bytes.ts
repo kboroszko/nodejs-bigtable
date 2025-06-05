@@ -12,7 +12,7 @@ export const createMetadata = (
           google.bigtable.v2.ColumnMetadata.create({
             name: v[0],
             type: v[1],
-          })
+          }),
         ),
       },
     },
@@ -32,7 +32,7 @@ export const createPreparedQuery = (
     undefined as any,
     prepareQueryResponse,
     {} as any,
-    {}
+    {},
   );
 };
 
@@ -48,7 +48,7 @@ export const createPrepareQueryResponse = (
 };
 
 export const pbType = (
-  value: google.bigtable.v2.IType
+  value: google.bigtable.v2.IType,
 ): google.bigtable.v2.Type => {
   return google.bigtable.v2.Type.create(value);
 };
@@ -62,7 +62,7 @@ export const createProtoRows = (
   const bytes = google.bigtable.v2.ProtoRows.encode(
     google.bigtable.v2.ProtoRows.create({
       values: values.map(v => google.bigtable.v2.Value.create(v)),
-    })
+    }),
   ).finish();
 
   return {

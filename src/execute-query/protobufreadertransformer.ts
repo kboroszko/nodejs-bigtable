@@ -45,7 +45,7 @@ export class ProtobufReaderTransformer extends Transform {
   _transform(
     batchAndToken: BatchAndToken | DrainGuard,
     _encoding: BufferEncoding,
-    callback: TransformCallback
+    callback: TransformCallback,
   ) {
     if (batchAndToken instanceof DrainGuard) {
       batchAndToken.callback();

@@ -64,11 +64,11 @@ export class NamedList<T> {
 
   protected static _fromTuples<R extends NamedList<T>, T>(
     type: {new (values: Array<T>, fieldMapping: FieldMapping): R},
-    tuples: [string | null, T][]
+    tuples: [string | null, T][],
   ): R {
     return new type(
       tuples.map(tuple => tuple[1]),
-      constructFieldMapping(tuples.map(tuple => tuple[0]))
+      constructFieldMapping(tuples.map(tuple => tuple[0])),
     );
   }
 
@@ -79,7 +79,7 @@ export class NamedList<T> {
         throw new Error(
           `Cannot access ${indexOrName} by name because it is available on multiple indexes: ${this.fieldMapping.duplicateFieldNames
             .get(indexOrName)!
-            .join(', ')}`
+            .join(', ')}`,
         );
       }
       index = this.fieldMapping.validFieldNames.get(indexOrName);

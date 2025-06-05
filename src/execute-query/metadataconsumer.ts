@@ -41,19 +41,19 @@ export class MetadataConsumer {
           ...type.structType!.fields!.map(field => ({
             name: field.fieldName as string | null,
             type: MetadataConsumer.parsePBType(
-              field.type as google.bigtable.v2.Type
+              field.type as google.bigtable.v2.Type,
             ),
-          }))
+          })),
         );
       case 'arrayType':
         return Types.Array(
           MetadataConsumer.parsePBType(
-            type.arrayType!.elementType! as google.bigtable.v2.Type
-          )
+            type.arrayType!.elementType! as google.bigtable.v2.Type,
+          ),
         );
       case 'mapType': {
         const keyType = MetadataConsumer.parsePBType(
-          type.mapType!.keyType! as google.bigtable.v2.Type
+          type.mapType!.keyType! as google.bigtable.v2.Type,
         );
         if (
           keyType.type !== 'int64' &&
@@ -61,25 +61,25 @@ export class MetadataConsumer {
           keyType.type !== 'bytes'
         ) {
           throw new Error(
-            `Unsupported type of map key received: ${keyType.type}`
+            `Unsupported type of map key received: ${keyType.type}`,
           );
         }
         return Types.Map(
           keyType,
           MetadataConsumer.parsePBType(
-            type.mapType!.valueType! as google.bigtable.v2.Type
-          )
+            type.mapType!.valueType! as google.bigtable.v2.Type,
+          ),
         );
       }
       default:
         throw new Error(
-          `Type ${type.kind} not supported by current client version`
+          `Type ${type.kind} not supported by current client version`,
         );
     }
   }
 
   static parseMetadata(
-    metadata: google.bigtable.v2.IResultSetMetadata
+    metadata: google.bigtable.v2.IResultSetMetadata,
   ): Types.ResultSetMetadata {
     if (!metadata.protoSchema) {
       throw new Error('Only protoSchemas are supported.');
@@ -97,11 +97,11 @@ export class MetadataConsumer {
           return [
             column.name ?? null,
             MetadataConsumer.parsePBType(
-              column.type! as google.bigtable.v2.Type
+              column.type! as google.bigtable.v2.Type,
             ),
           ];
         }
-      })
+      }),
     );
   }
 }

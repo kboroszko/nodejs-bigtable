@@ -29,14 +29,14 @@ import Long = require('long');
  */
 export function parseParameters(
   parameters: {[param: string]: ExecuteQueryParameterValue},
-  parameterTypes: {[param: string]: SqlTypes.Type}
+  parameterTypes: {[param: string]: SqlTypes.Type},
 ): {[param: string]: google.bigtable.v2.IValue} {
   // Assert both objects contain the same keys:
   const parameterKeys = Object.keys(parameters);
   const parameterTypeKeys = Object.keys(parameterTypes);
   if (parameterKeys.length !== parameterTypeKeys.length) {
     throw new Error(
-      `Number of parameters (${parameterKeys.length}) does not match number of parameter types (${parameterTypeKeys.length}).`
+      `Number of parameters (${parameterKeys.length}) does not match number of parameter types (${parameterTypeKeys.length}).`,
     );
   }
   // if the numbers of keys match, but keys differ we will catch it in the next step
@@ -61,7 +61,7 @@ export function parseParameterTypes(parameter_types: {
     Object.entries(parameter_types).map(([key, value]) => [
       key,
       executeQueryTypeToPBType(value),
-    ])
+    ]),
   );
 }
 
@@ -77,7 +77,7 @@ function inferType(value: ExecuteQueryParameterValue): SqlTypes.Type {
   } else if (is.array(value)) {
     // eslint-disable-next-line
     throw new Error(
-      `Cannot infer type of an array ${value}. Please provide a type hint using parameter_types.`
+      `Cannot infer type of an array ${value}. Please provide a type hint using parameter_types.`,
     );
   } else if (typeof value === 'object') {
     if (value instanceof Uint8Array) {
@@ -86,7 +86,7 @@ function inferType(value: ExecuteQueryParameterValue): SqlTypes.Type {
       return SqlTypes.Timestamp();
     } else if (value instanceof Date) {
       throw new Error(
-        'Date is not supported as a parameter type. Please use PreciseDate for Sql TIMESTAMP or BigtableDate for SQL DATE'
+        'Date is not supported as a parameter type. Please use PreciseDate for Sql TIMESTAMP or BigtableDate for SQL DATE',
       );
     } else if (value instanceof BigtableDate) {
       return SqlTypes.Date();
@@ -106,20 +106,20 @@ function inferType(value: ExecuteQueryParameterValue): SqlTypes.Type {
     prototypeString ? `, ${prototypeString}` : ''
   })`;
   throw new Error(
-    `Cannot infer type of ${value} (${typeInfo}). Please provide a type hint using parameter_types.`
+    `Cannot infer type of ${value} (${typeInfo}). Please provide a type hint using parameter_types.`,
   );
 }
 
 function setTypeField(
   value: google.bigtable.v2.IValue,
-  type: SqlTypes.Type
+  type: SqlTypes.Type,
 ): google.bigtable.v2.IValue {
   value.type = executeQueryTypeToPBType(type);
   return value;
 }
 
 function executeQueryTypeToPBType(
-  type: SqlTypes.Type
+  type: SqlTypes.Type,
 ): google.bigtable.v2.IType {
   switch (type.type) {
     case 'string':
@@ -161,7 +161,7 @@ function executeQueryTypeToPBType(
 
 function convertJsValueToValue(
   value: ExecuteQueryParameterValue,
-  type: SqlTypes.Type
+  type: SqlTypes.Type,
 ): google.bigtable.v2.IValue {
   if (value === null) {
     return {};
@@ -192,7 +192,7 @@ function convertJsValueToValue(
 }
 
 function convertToString(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (is.string(value)) {
     return {stringValue: value as string};
@@ -207,14 +207,14 @@ function bigintToLong(value: bigint): Long {
   // Long fromString does not check this
   if (value > MAX_LONG || value < MIN_LONG) {
     throw new Error(
-      `Value ${value} cannot be converted to int64 - it is out of range.`
+      `Value ${value} cannot be converted to int64 - it is out of range.`,
     );
   }
   return Long.fromString(value.toString());
 }
 
 function convertToInt64(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (typeof value === 'bigint') {
     return {
@@ -222,14 +222,14 @@ function convertToInt64(
     };
   } else if (typeof value === 'number') {
     throw new Error(
-      `Value ${value} cannot be converted to int64 - argument of type INT64 should by passed as BigInt.`
+      `Value ${value} cannot be converted to int64 - argument of type INT64 should by passed as BigInt.`,
     );
   }
   throw new Error(`Value ${value} cannot be converted to int64.`);
 }
 
 function convertToFloat64(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (typeof value === 'number') {
     return {floatValue: value};
@@ -238,7 +238,7 @@ function convertToFloat64(
 }
 
 function convertToBytes(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (typeof value === 'object' && value instanceof Uint8Array) {
     return {bytesValue: value};
@@ -247,7 +247,7 @@ function convertToBytes(
 }
 
 function convertToBool(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (typeof value === 'boolean') {
     return {boolValue: value};
@@ -256,18 +256,18 @@ function convertToBool(
 }
 
 function convertToTimestamp(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (typeof value === 'object' && value instanceof PreciseDate) {
     return {timestampValue: value.toStruct()};
   }
   throw new Error(
-    `Value ${value} cannot be converted to timestamp, please use PreciseDate instead.`
+    `Value ${value} cannot be converted to timestamp, please use PreciseDate instead.`,
   );
 }
 
 function convertToDate(
-  value: ExecuteQueryParameterValue
+  value: ExecuteQueryParameterValue,
 ): google.bigtable.v2.IValue {
   if (typeof value === 'object' && value instanceof BigtableDate) {
     return {dateValue: value};
@@ -277,7 +277,7 @@ function convertToDate(
 
 function convertToArray(
   value: ExecuteQueryParameterValue,
-  type: SqlTypes.ArrayType
+  type: SqlTypes.ArrayType,
 ): google.bigtable.v2.IValue {
   if (!is.array(value)) {
     throw new Error(`Value ${value} cannot be converted to an array.`);
@@ -292,7 +292,7 @@ function convertToArray(
         } catch (conversionError: any) {
           if (conversionError instanceof Error) {
             throw new Error(
-              `Error while converting element ${index} of an array: ${conversionError.message}`
+              `Error while converting element ${index} of an array: ${conversionError.message}`,
             );
           } else {
             throw conversionError;

@@ -24,7 +24,7 @@ type PublicByteBufferTransformer = {
   messageBuffer: Uint8Array[];
   push: (data: any) => void;
   processProtoRowsBatch: (
-    partialResultSet: google.bigtable.v2.IPartialResultSet
+    partialResultSet: google.bigtable.v2.IPartialResultSet,
   ) => void;
 };
 
@@ -68,7 +68,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.strictEqual(
         byteBuffer.messageBuffer[0],
-        response1.results!.protoRowsBatch!.batchData!
+        response1.results!.protoRowsBatch!.batchData!,
       );
 
       // send the checksum
@@ -78,7 +78,9 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageQueue.length, 1);
       assert.deepStrictEqual(
         byteBuffer.messageQueue[0],
-        Buffer.concat([response1.results!.protoRowsBatch!.batchData! as Buffer])
+        Buffer.concat([
+          response1.results!.protoRowsBatch!.batchData! as Buffer,
+        ]),
       );
       assert.strictEqual(byteBuffer.messageBuffer.length, 0);
       done();
@@ -100,7 +102,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.strictEqual(
         byteBuffer.messageBuffer[0],
-        response1.results!.protoRowsBatch!.batchData!
+        response1.results!.protoRowsBatch!.batchData!,
       );
 
       // send a reset
@@ -114,7 +116,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
         Buffer.concat([
           response1.results!.protoRowsBatch!.batchData! as Buffer,
           responseWithChecksum.results!.protoRowsBatch!.batchData! as Buffer,
-        ])
+        ]),
       );
       assert.strictEqual(byteBuffer.messageBuffer.length, 0);
       done();
@@ -148,7 +150,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.strictEqual(
         byteBuffer.messageBuffer[0],
-        response1.results!.protoRowsBatch!.batchData!
+        response1.results!.protoRowsBatch!.batchData!,
       );
 
       // send a reset
@@ -160,7 +162,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.deepStrictEqual(
         byteBuffer.messageBuffer[0],
-        responseWithReset.results!.protoRowsBatch!.batchData!
+        responseWithReset.results!.protoRowsBatch!.batchData!,
       );
       done();
     });
@@ -191,12 +193,12 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
         Buffer.concat([
           responses[0].results!.protoRowsBatch!.batchData! as Buffer,
           responses[1].results!.protoRowsBatch!.batchData! as Buffer,
-        ])
+        ]),
       );
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.strictEqual(
         byteBuffer.messageBuffer[0],
-        responses[2].results!.protoRowsBatch!.batchData!
+        responses[2].results!.protoRowsBatch!.batchData!,
       );
 
       // send a reset
@@ -208,7 +210,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.deepStrictEqual(
         byteBuffer.messageBuffer[0],
-        responseWithReset.results!.protoRowsBatch!.batchData!
+        responseWithReset.results!.protoRowsBatch!.batchData!,
       );
       done();
     });
@@ -233,7 +235,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.strictEqual(
         byteBuffer.messageBuffer[0],
-        response1.results!.protoRowsBatch!.batchData!
+        response1.results!.protoRowsBatch!.batchData!,
       );
 
       // send a token
@@ -314,7 +316,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
       assert.strictEqual(byteBuffer.messageBuffer.length, 1);
       assert.strictEqual(
         byteBuffer.messageBuffer[0],
-        response1.results!.protoRowsBatch!.batchData!
+        response1.results!.protoRowsBatch!.batchData!,
       );
 
       // send a token
@@ -353,7 +355,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
         2412835642,
         undefined,
         {intValue: 1},
-        {intValue: 2}
+        {intValue: 2},
       );
       byteBuffer.processProtoRowsBatch(response.results!);
       done();
@@ -366,7 +368,7 @@ describe('Bigtable/ExecuteQueryByteBufferTransformer', () => {
         111,
         undefined,
         {intValue: 1},
-        {intValue: 2}
+        {intValue: 2},
       );
       assert.throws(() => {
         byteBuffer.processProtoRowsBatch(response.results!);
